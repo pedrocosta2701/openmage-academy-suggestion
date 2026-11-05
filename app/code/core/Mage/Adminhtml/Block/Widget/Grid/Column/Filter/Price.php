@@ -1,0 +1,147 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Range grid column filter
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Block_Widget_Grid_Column_Filter_Price extends Mage_Adminhtml_Block_Widget_Grid_Column_Filter_Abstract
+{
+    protected $_currencyList = null;
+
+    protected $_currencyModel = null;
+
+    #[Override]
+    public function getHtml()
+    {
+        $fromLabel = Mage::helper('adminhtml')->__('From');
+        $toLabel = Mage::helper('adminhtml')->__('To');
+
+        $html  = '<div class="range filter-price">';
+        $html .= '<div class="range-line"><span class="label">' . $fromLabel . '</span> <input type="number" placeholder="' . $fromLabel . '" name="' . $this->_getHtmlName() . '[from]" id="' . $this->_getHtmlId() . '_from" value="' . $this->getEscapedValue('from') . '" class="input-text no-changes"/></div>';
+        $html .= '<div class="range-line"><span class="label">' . $toLabel . '</span><input type="number" placeholder="' . $toLabel . '" name="' . $this->_getHtmlName() . '[to]" id="' . $this->_getHtmlId() . '_to" value="' . $this->getEscapedValue('to') . '" class="input-text no-changes"/></div>';
+        if ($this->getDisplayCurrencySelect()) {
+            $html .= '<div class="range-line"><span class="label">' . Mage::helper('adminhtml')->__('In') . '</span>' . $this->_getCurrencySelectHtml() . '</div>';
+        }
+
+        return $html . '</div>';
+    }
+
+    public function getDisplayCurrencySelect()
+    {
+        if (!is_null($this->getColumn()->getDataByKey('display_currency_select'))) {
+            return $this->getColumn()->getDataByKey('display_currency_select');
+        }
+
+        return true;
+    }
+
+    public function getCurrencyAffect()
+    {
+        if (!is_null($this->getColumn()->getDataByKey('currency_affect'))) {
+            return $this->getColumn()->getDataByKey('currency_affect');
+        }
+
+        return true;
+    }
+
+    protected function _getCurrencyModel()
+    {
+        if (is_null($this->_currencyModel)) {
+            $this->_currencyModel = Mage::getModel('directory/currency');
+        }
+
+        return $this->_currencyModel;
+    }
+
+    protected function _getCurrencySelectHtml()
+    {
+        $value = $this->getEscapedValue('currency');
+        if (!$value) {
+            $value = $this->getColumn()->getCurrencyCode();
+        }
+
+        $html  = '';
+        $html .= '<select name="' . $this->_getHtmlName() . '[currency]" id="' . $this->_getHtmlId() . '_currency">';
+        foreach ($this->_getCurrencyList() as $currency) {
+            $html .= '<option value="' . $currency . '" ' . ($currency == $value ? 'selected="selected"' : '') . '>'
+                . $currency . '</option>';
+        }
+
+        return $html . '</select>';
+    }
+
+    protected function _getCurrencyList()
+    {
+        if (is_null($this->_currencyList)) {
+            $this->_currencyList = $this->_getCurrencyModel()->getConfigAllowCurrencies();
+        }
+
+        return $this->_currencyList;
+    }
+
+    public function getValue($index = null)
+    {
+        if ($index) {
+            return $this->getData('value', $index);
+        }
+
+        $value = $this->getDataByKey('value');
+        if ((isset($value['from']) && (string) $value['from'] !== '')
+            || (isset($value['to']) && (string) $value['to'] !== '')
+        ) {
+            return $value;
+        }
+
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    public function getCondition()
+    {
+        $value = $this->getValue();
+
+        if (isset($value['currency']) && $this->getCurrencyAffect()) {
+            $displayCurrency = $value['currency'];
+        } else {
+            $displayCurrency = $this->getColumn()->getCurrencyCode();
+        }
+
+        $rate = $this->_getRate($displayCurrency, $this->getColumn()->getCurrencyCode());
+
+        foreach (['from', 'to'] as $key) {
+            if (isset($value[$key]) && is_numeric($value[$key])) {
+                $value[$key] = sprintf('%F', $value[$key] * $rate);
+            }
+        }
+
+        $this->prepareRates($displayCurrency);
+        return $value;
+    }
+
+    protected function _getRate($min, $max)
+    {
+        return Mage::getModel('directory/currency')->load($min)->getAnyRate($max);
+    }
+
+    public function prepareRates($displayCurrency)
+    {
+        $storeCurrency = $this->getColumn()->getCurrencyCode();
+
+        $rate = $this->_getRate($storeCurrency, $displayCurrency);
+        if ($rate) {
+            $this->getColumn()->setRate($rate);
+            $this->getColumn()->setCurrencyCode($displayCurrency);
+        }
+    }
+}

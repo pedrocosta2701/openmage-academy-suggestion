@@ -1,0 +1,15 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Catalog_Block_Product_View
+ * @var Mage_Catalog_Block_Product_View $this
+ */
+?>
+<?php $_product = $this->getProduct() ?>
+<?php echo $this->getPriceHtml($_product, false, '_clone') ?>

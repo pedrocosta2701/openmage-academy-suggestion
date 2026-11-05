@@ -1,0 +1,27 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Reports_Block_Product_Viewed $this */
+?>
+<?php if ($_products = $this->getRecentlyViewedProducts()): ?>
+<div class="block block-list block-viewed">
+    <div class="block-title">
+        <strong><span><?php echo $this->__('Recently Viewed Products') ?></span></strong>
+    </div>
+    <div class="block-content">
+        <ol id="recently-viewed-items">
+        <?php foreach ($_products as $_item): ?>
+            <li class="item">
+                <p class="product-name"><a href="<?php echo $this->getProductUrl($_item) ?>"><?php echo $this->helper('catalog/output')->productAttribute($_item, $_item->getName() , 'name') ?></a></p>
+            </li>
+        <?php endforeach ?>
+        </ol>
+        <script type="text/javascript">decorateList('recently-viewed-items');</script>
+    </div>
+</div>
+<?php endif ?>

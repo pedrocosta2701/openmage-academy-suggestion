@@ -1,0 +1,190 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Sales
+ */
+
+/**
+ * @package    Mage_Sales
+ */
+class Mage_Sales_Model_Entity_Sale_Collection extends Varien_Object implements IteratorAggregate
+{
+    /**
+     * Read connection
+     *
+     * @var false|Varien_Db_Adapter_Interface
+     */
+    protected $_read;
+
+    protected $_items = [];
+
+    protected $_totals = ['lifetime' => 0, 'num_orders' => 0];
+
+    /**
+     * Entity attribute
+     *
+     * @var Mage_Eav_Model_Entity_Abstract
+     */
+    protected $_entity;
+
+    /**
+     * Collection's Zend_Db_Select object
+     *
+     * @var Zend_Db_Select
+     */
+    protected $_select;
+
+    /**
+     * @var Mage_Customer_Model_Customer
+     */
+    protected $_customer;
+
+    public function __construct()
+    {
+        $this->_entity = Mage::getModel('sales_entity/order');
+        $this->_read = $this->_entity->getReadConnection();
+    }
+
+    /**
+     * @return $this
+     */
+    public function setCustomerFilter(Mage_Customer_Model_Customer $customer)
+    {
+        $this->_customer = $customer;
+        return $this;
+    }
+
+    /**
+     * @param  bool                $printQuery
+     * @param  bool                $logQuery
+     * @return $this
+     * @throws Mage_Core_Exception
+     */
+    public function load($printQuery = false, $logQuery = false)
+    {
+        $this->_select = $this->_read->select();
+        $entityTable = $this->getEntity()->getEntityTable();
+        $this->getSelect()
+            ->from(
+                ['sales' => $entityTable],
+                [
+                    'store_id',
+                    'lifetime'  => 'sum(sales.base_grand_total)',
+                    'avgsale'   => 'avg(sales.base_grand_total)',
+                    'num_orders' => 'count(sales.base_grand_total)',
+                ],
+            )
+            ->where('sales.entity_type_id=?', $this->getEntity()->getTypeId())
+            ->group('sales.store_id')
+        ;
+        if ($this->_customer instanceof Mage_Customer_Model_Customer) {
+            $this->getSelect()
+                ->where('sales.customer_id=?', $this->_customer->getId());
+        }
+
+        $this->printLogQuery($printQuery, $logQuery);
+        try {
+            $values = $this->_read->fetchAll($this->getSelect()->__toString());
+        } catch (Exception $exception) {
+            $this->printLogQuery(true, true, $this->getSelect()->__toString());
+            throw $exception;
+        }
+
+        $stores = Mage::getResourceModel('core/store_collection')->setWithoutDefaultFilter()->load()->toOptionHash();
+        if ($values !== []) {
+            foreach ($values as $item) {
+                $obj = new Varien_Object($item);
+                $storeName = $stores[$obj->getStoreId()] ?? null;
+
+                $this->_items[$item['store_id']] = $obj;
+                $this->_items[$item['store_id']]->setStoreName($storeName);
+                $this->_items[$item['store_id']]->setAvgNormalized($obj->getAvgsale() * $obj->getNumOrders());
+                foreach (array_keys($this->_totals) as $key) {
+                    $this->_totals[$key] += $obj->getData($key);
+                }
+            }
+
+            if ($this->_totals['num_orders']) {
+                $this->_totals['avgsale'] = $this->_totals['lifetime'] / $this->_totals['num_orders'];
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Print and/or log query
+     *
+     * @param  bool        $printQuery
+     * @param  bool        $logQuery
+     * @param  null|string $sql
+     * @return $this
+     */
+    public function printLogQuery($printQuery = false, $logQuery = false, $sql = null)
+    {
+        if ($printQuery) {
+            echo $sql ?? $this->getSelect()->__toString();
+        }
+
+        if ($logQuery) {
+            Mage::log($sql ?? $this->getSelect()->__toString());
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get zend db select instance
+     *
+     * @return Zend_Db_Select
+     */
+    public function getSelect()
+    {
+        return $this->_select;
+    }
+
+    /**
+     * @param  string                                   $attr
+     * @return Mage_Eav_Model_Entity_Attribute_Abstract
+     */
+    public function getAttribute($attr)
+    {
+        return $this->_entity->getAttribute($attr);
+    }
+
+    /**
+     * @return Mage_Eav_Model_Entity_Abstract
+     */
+    public function getEntity()
+    {
+        return $this->_entity;
+    }
+
+    /**
+     * @return ArrayIterator
+     */
+    #[ReturnTypeWillChange]
+    public function getIterator()
+    {
+        return new ArrayIterator($this->_items);
+    }
+
+    /**
+     * @return array
+     */
+    public function getItems()
+    {
+        return $this->_items;
+    }
+
+    /**
+     * @return Varien_Object
+     */
+    public function getTotals()
+    {
+        return new Varien_Object($this->_totals);
+    }
+}

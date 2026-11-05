@@ -1,0 +1,14 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php if($pageData->getPageMetaKeywords()): ?>
+<meta name="keywords" content="<?php echo $pageData->getPageMetaKeywords() ?>" />
+<?php endif ?>
+<?php if($pageData->getPageMetaDescription()): ?>
+<meta name="description" content="<?php echo $pageData->getPageMetaDescription() ?>" />
+<?php endif ?>

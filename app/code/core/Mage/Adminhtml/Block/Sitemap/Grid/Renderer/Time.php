@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+use Carbon\Carbon;
+
+/**
+ * Sitemap grid link column renderer
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Block_Sitemap_Grid_Renderer_Time extends Mage_Adminhtml_Block_Widget_Grid_Column_Renderer_Abstract
+{
+    /**
+     * Prepare link to display in grid
+     *
+     * @return string
+     */
+    #[Override]
+    public function render(Varien_Object $row)
+    {
+        return Carbon::createFromTimestamp(Carbon::parse($row->getSitemapTime())->getTimestamp() + Mage::getSingleton('core/date')->getGmtOffset())->format(Varien_Date::DATETIME_PHP_FORMAT);
+    }
+}

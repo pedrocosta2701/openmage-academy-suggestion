@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Downloadable
+ */
+-->
+<config>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <config>
+                                <children>
+                                    <downloadable translate="title" module="downloadable">
+                                        <title>Downloadable Product Options</title>
+                                    </downloadable>
+                                </children>
+                            </config>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+    <menu>
+        <report>
+            <children>
+                <products>
+                    <children>
+                        <downloads translate="title" module="reports">
+                            <title>Downloads</title>
+                            <action>adminhtml/report_product/downloads</action>
+                        </downloads>
+                    </children>
+                </products>
+            </children>
+        </report>
+    </menu>
+</config>

@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Tax
+ */
+
+/**
+ * Tax report resource model
+ *
+ * @package    Mage_Tax
+ */
+class Mage_Tax_Model_Resource_Report_Tax extends Mage_Reports_Model_Resource_Report_Abstract
+{
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init('tax/tax_order_aggregated_created', 'id');
+    }
+
+    /**
+     * Aggregate Tax data
+     *
+     * @param  null|string $dateFrom
+     * @param  null|string $dateTo
+     * @return $this
+     */
+    public function aggregate($dateFrom = null, $dateTo = null)
+    {
+        Mage::getResourceModel('tax/report_tax_createdat')->aggregate($dateFrom, $dateTo);
+        Mage::getResourceModel('tax/report_tax_updatedat')->aggregate($dateFrom, $dateTo);
+        $this->_setFlagData(Mage_Reports_Model_Flag::REPORT_TAX_FLAG_CODE);
+
+        return $this;
+    }
+}

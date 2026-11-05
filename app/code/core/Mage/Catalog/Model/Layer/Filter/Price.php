@@ -1,0 +1,613 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Catalog
+ */
+
+/**
+ * Layer price filter
+ *
+ * @package    Mage_Catalog
+ *
+ * @method array getInterval()
+ * @method array getPriorIntervals()
+ * @method $this setInterval(array $value)
+ * @method $this setPriorIntervals(array $value)
+ */
+class Mage_Catalog_Model_Layer_Filter_Price extends Mage_Catalog_Model_Layer_Filter_Abstract
+{
+    /**
+     * XML configuration paths for Price Layered Navigation
+     */
+    public const XML_PATH_RANGE_CALCULATION       = 'catalog/layered_navigation/price_range_calculation';
+
+    public const XML_PATH_RANGE_STEP              = 'catalog/layered_navigation/price_range_step';
+
+    public const XML_PATH_RANGE_MAX_INTERVALS     = 'catalog/layered_navigation/price_range_max_intervals';
+
+    public const XML_PATH_ONE_PRICE_INTERVAL      = 'catalog/layered_navigation/one_price_interval';
+
+    public const XML_PATH_INTERVAL_DIVISION_LIMIT = 'catalog/layered_navigation/interval_division_limit';
+
+    /**
+     * Price layered navigation modes: Automatic (equalize price ranges), Automatic (equalize product counts), Manual
+     */
+    public const RANGE_CALCULATION_AUTO     = 'auto';
+
+    // equalize price ranges
+    public const RANGE_CALCULATION_IMPROVED = 'improved';
+
+    // equalize product counts
+    public const RANGE_CALCULATION_MANUAL   = 'manual';
+
+    /**
+     * Minimal size of the range
+     */
+    public const MIN_RANGE_POWER = 10;
+
+    /**
+     * Resource instance
+     *
+     * @var null|Mage_Catalog_Model_Resource_Layer_Filter_Price
+     */
+    protected $_resource;
+
+    /**
+     * Class constructor
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->_requestVar = 'price';
+    }
+
+    /**
+     * Retrieve resource instance
+     *
+     * @return Mage_Catalog_Model_Resource_Layer_Filter_Price
+     */
+    protected function _getResource()
+    {
+        if (is_null($this->_resource)) {
+            $this->_resource = Mage::getResourceModel('catalog/layer_filter_price');
+        }
+
+        return $this->_resource;
+    }
+
+    /**
+     * Get price range for building filter steps
+     *
+     * @return int
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function getPriceRange()
+    {
+        $range = $this->getDataByKey('price_range');
+        if (!$range) {
+            $currentCategory = Mage::registry('current_category_filter');
+            if ($currentCategory) {
+                $range = $currentCategory->getFilterPriceRange();
+            } else {
+                $range = $this->getLayer()->getCurrentCategory()->getFilterPriceRange();
+            }
+
+            $maxPrice = $this->getMaxPriceInt();
+            if (!$range) {
+                $calculation = Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_CALCULATION);
+                if ($calculation == self::RANGE_CALCULATION_AUTO) {
+                    $index = 1;
+                    do {
+                        $range = 10 ** (strlen((string) floor($maxPrice)) - $index);
+                        $items = $this->getRangeItemCounts($range);
+                        $index++;
+                    } while ($range > self::MIN_RANGE_POWER && count($items) < 2);
+                } else {
+                    $range = (float) Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_STEP);
+                }
+            }
+
+            $this->setData('price_range', $range);
+        }
+
+        return $range;
+    }
+
+    /**
+     * Get maximum price from layer products set
+     *
+     * @return float
+     */
+    public function getMaxPriceInt()
+    {
+        $maxPrice = $this->getDataByKey('max_price_int');
+        if (is_null($maxPrice)) {
+            $maxPrice = $this->getLayer()->getProductCollection()->getMaxPrice();
+            $maxPrice = floor($maxPrice);
+            $this->setData('max_price_int', $maxPrice);
+        }
+
+        return $maxPrice;
+    }
+
+    /**
+     * Get information about products count in range
+     *
+     * @param  int                             $range
+     * @return array
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function getRangeItemCounts($range)
+    {
+        $rangeKey = 'range_item_counts_' . $range;
+        $items = $this->getData($rangeKey);
+        if (is_null($items)) {
+            $items = $this->_getResource()->getCount($this, $range);
+            // checking max number of intervals
+            $index = 0;
+            $lastIndex = null;
+            $maxIntervalsNumber = $this->getMaxIntervalsNumber();
+            $calculation = Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_CALCULATION);
+            foreach ($items as $key => $value) {
+                ++$index;
+                if ($calculation == self::RANGE_CALCULATION_MANUAL && $index > 1 && $index > $maxIntervalsNumber) {
+                    $items[$lastIndex] += $value;
+                    unset($items[$key]);
+                } else {
+                    $lastIndex = $key;
+                }
+            }
+
+            $this->setData($rangeKey, $items);
+        }
+
+        return $items;
+    }
+
+    /**
+     * Prepare text of item label
+     *
+     * @param  int                             $range
+     * @param  float                           $value
+     * @return string
+     * @throws Mage_Core_Model_Store_Exception
+     * @deprecated since 1.7.0.0
+     */
+    protected function _renderItemLabel($range, $value)
+    {
+        $store      = Mage::app()->getStore();
+        $fromPrice  = $store->formatPrice(($value - 1) * $range);
+        $toPrice    = $store->formatPrice($value * $range);
+
+        return Mage::helper('catalog')->__('%s - %s', $fromPrice, $toPrice);
+    }
+
+    /**
+     * Prepare text of range label
+     *
+     * @param  float|string                    $fromPrice
+     * @param  float|string                    $toPrice
+     * @return string
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    protected function _renderRangeLabel($fromPrice, $toPrice)
+    {
+        $store      = Mage::app()->getStore();
+        $formattedFromPrice  = $store->formatPrice($fromPrice);
+        if ($toPrice === '') {
+            return Mage::helper('catalog')->__('%s and above', $formattedFromPrice);
+        }
+
+        if ($fromPrice == $toPrice && Mage::app()->getStore()->getConfig(self::XML_PATH_ONE_PRICE_INTERVAL)) {
+            return $formattedFromPrice;
+        }
+
+        if ($fromPrice != $toPrice) {
+            $toPrice = (float) $toPrice - .01;
+        }
+
+        return Mage::helper('catalog')->__('%s - %s', $formattedFromPrice, $store->formatPrice($toPrice));
+    }
+
+    /**
+     * Get price aggreagation data cache key
+     *
+     * @return string
+     * @throws Mage_Core_Model_Store_Exception
+     * @deprecated after 1.4
+     */
+    protected function _getCacheKey()
+    {
+        $key = $this->getLayer()->getStateKey()
+            . '_PRICES_GRP_' . Mage::getSingleton('customer/session')->getCustomerGroupId()
+            . '_CURR_' . Mage::app()->getStore()->getCurrentCurrencyCode()
+            . '_ATTR_' . $this->getAttributeModel()->getAttributeCode()
+            . '_LOC_'
+        ;
+        $taxReq = Mage::getSingleton('tax/calculation')->getDefaultRateRequest();
+
+        return $key . implode('_', $taxReq->getData());
+    }
+
+    /**
+     * Get additional request param data
+     *
+     * @return string
+     */
+    protected function _getAdditionalRequestData()
+    {
+        $result = '';
+        $appliedInterval = $this->getInterval();
+        if ($appliedInterval) {
+            $result = ',' . $appliedInterval[0] . '-' . $appliedInterval[1];
+            $priorIntervals = $this->getResetValue();
+            if ($priorIntervals) {
+                $result .= ',' . $priorIntervals;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get data generated by algorithm for build price filter items
+     *
+     * @return array
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    protected function _getCalculatedItemsData()
+    {
+        /** @var Mage_Catalog_Model_Layer_Filter_Price_Algorithm $algorithmModel */
+        $algorithmModel = Mage::getSingleton('catalog/layer_filter_price_algorithm');
+        $collection = $this->getLayer()->getProductCollection();
+        $appliedInterval = $this->getInterval();
+        if ($appliedInterval
+            && $collection->getPricesCount() <= $this->getIntervalDivisionLimit()
+        ) {
+            return [];
+        }
+
+        $algorithmModel->setPricesModel($this)->setStatistics(
+            $collection->getMinPrice(),
+            $collection->getMaxPrice(),
+            $collection->getPriceStandardDeviation(),
+            $collection->getPricesCount(),
+        );
+
+        if ($appliedInterval) {
+            if ($appliedInterval[0] == $appliedInterval[1] || $appliedInterval[1] === '0') {
+                return [];
+            }
+
+            $algorithmModel->setLimits($appliedInterval[0], $appliedInterval[1]);
+        }
+
+        $items = [];
+        foreach ($algorithmModel->calculateSeparators() as $separator) {
+            $items[] = [
+                'label' => $this->_renderRangeLabel($separator['from'], $separator['to']),
+                'value' => (($separator['from'] == 0) ? '' : $separator['from'])
+                    . '-' . $separator['to'] . $this->_getAdditionalRequestData(),
+                'count' => $separator['count'],
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Mage_Core_Exception
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    #[Override]
+    protected function _getItemsData()
+    {
+        if (Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_CALCULATION) == self::RANGE_CALCULATION_IMPROVED) {
+            return $this->_getCalculatedItemsData();
+        }
+
+        if ($this->getInterval()) {
+            return [];
+        }
+
+        $range      = $this->getPriceRange();
+        $dbRanges   = $this->getRangeItemCounts($range);
+        $data       = [];
+
+        if (!empty($dbRanges)) {
+            $lastIndex = array_keys($dbRanges);
+            $lastIndex = $lastIndex[count($lastIndex) - 1];
+
+            foreach ($dbRanges as $index => $count) {
+                $fromPrice = ($index == 1) ? '' : (($index - 1) * $range);
+                $toPrice = ($index == $lastIndex) ? '' : ($index * $range);
+
+                $data[] = [
+                    'label' => $this->_renderRangeLabel($fromPrice, $toPrice),
+                    'value' => $fromPrice . '-' . $toPrice,
+                    'count' => $count,
+                ];
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Apply price range filter to collection
+     *
+     * @return $this
+     */
+    protected function _applyPriceRange()
+    {
+        $this->_getResource()->applyPriceRange($this);
+        return $this;
+    }
+
+    /**
+     * Validate and parse filter request param
+     *
+     * @param  string     $filter
+     * @return array|bool
+     */
+    protected function _validateFilter($filter)
+    {
+        $filter = explode('-', $filter);
+        if (count($filter) != 2) {
+            return false;
+        }
+
+        foreach ($filter as $value) {
+            if (($value !== '' && $value !== '0' && (float) $value <= 0) || is_infinite((float) $value)) {
+                return false;
+            }
+        }
+
+        return $filter;
+    }
+
+    /**
+     * Apply price range filter
+     *
+     * @param  Varien_Object                   $filterBlock deprecated
+     * @return $this
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    #[Override]
+    public function apply(Zend_Controller_Request_Abstract $request, $filterBlock)
+    {
+        /**
+         * Filter must be string: $fromPrice-$toPrice
+         */
+        $filter = $request->getParam($this->getRequestVar());
+        if (!$filter) {
+            return $this;
+        }
+
+        //validate filter
+        $filterParams = explode(',', $filter);
+        $filter = $this->_validateFilter($filterParams[0]);
+        if (!$filter) {
+            return $this;
+        }
+
+        [$min, $max] = $filter;
+
+        $this->setInterval([$min, $max]);
+
+        $priorFilters = [];
+        $counter = count($filterParams);
+        for ($index = 1; $index < $counter; ++$index) {
+            $priorFilter = $this->_validateFilter($filterParams[$index]);
+            if ($priorFilter) {
+                $priorFilters[] = $priorFilter;
+            } else {
+                //not valid data
+                $priorFilters = [];
+                break;
+            }
+        }
+
+        if ($priorFilters) {
+            $this->setPriorIntervals($priorFilters);
+        }
+
+        $this->_applyPriceRange();
+        $this->getLayer()->getState()->addFilter($this->_createItem(
+            $this->_renderRangeLabel(empty($min) ? 0 : $min, $max),
+            $filter,
+        ));
+
+        return $this;
+    }
+
+    /**
+     * Apply filter value to product collection based on filter range and selected value
+     *
+     * @param  int   $range
+     * @param  int   $index
+     * @return $this
+     * @deprecated since 1.7.0.0
+     */
+    protected function _applyToCollection($range, $index)
+    {
+        $this->_getResource()->applyFilterToCollection($this, $range, $index);
+        return $this;
+    }
+
+    /**
+     * Retrieve active customer group id
+     *
+     * @return int
+     */
+    public function getCustomerGroupId()
+    {
+        $customerGroupId = $this->_getData('customer_group_id');
+        if (is_null($customerGroupId)) {
+            return Mage::getSingleton('customer/session')->getCustomerGroupId();
+        }
+
+        return $customerGroupId;
+    }
+
+    /**
+     * Set active customer group id for filter
+     *
+     * @param  int   $customerGroupId
+     * @return $this
+     */
+    public function setCustomerGroupId($customerGroupId)
+    {
+        return $this->setData('customer_group_id', $customerGroupId);
+    }
+
+    /**
+     * Retrieve active currency rate for filter
+     *
+     * @return float
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function getCurrencyRate()
+    {
+        $rate = $this->_getData('currency_rate');
+        if (is_null($rate)) {
+            $rate = Mage::app()->getStore($this->getStoreId())->getCurrentCurrencyRate();
+        }
+
+        if (!$rate) {
+            return 1;
+        }
+
+        return $rate;
+    }
+
+    /**
+     * Set active currency rate for filter
+     *
+     * @param  float $rate
+     * @return $this
+     */
+    public function setCurrencyRate($rate)
+    {
+        return $this->setData('currency_rate', $rate);
+    }
+
+    /**
+     * Get maximum number of intervals
+     *
+     * @return int
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function getMaxIntervalsNumber()
+    {
+        return (int) Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_MAX_INTERVALS);
+    }
+
+    /**
+     * Get interval division limit
+     *
+     * @return int
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    public function getIntervalDivisionLimit()
+    {
+        return (int) Mage::app()->getStore()->getConfig(self::XML_PATH_INTERVAL_DIVISION_LIMIT);
+    }
+
+    /**
+     * Get filter value for reset current filter state
+     *
+     * @return null|string
+     */
+    public function getResetValue()
+    {
+        $priorIntervals = $this->getPriorIntervals();
+        $value = [];
+        if ($priorIntervals) {
+            foreach ($priorIntervals as $priorInterval) {
+                $value[] = implode('-', $priorInterval);
+            }
+
+            return implode(',', $value);
+        }
+
+        return parent::getResetValue();
+    }
+
+    /**
+     * Get 'clear price' link text
+     *
+     * @return false|string
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    #[Override]
+    public function getClearLinkText()
+    {
+        if (Mage::app()->getStore()->getConfig(self::XML_PATH_RANGE_CALCULATION) == self::RANGE_CALCULATION_IMPROVED
+            && $this->getPriorIntervals()
+        ) {
+            return Mage::helper('catalog')->__('Clear Price');
+        }
+
+        return parent::getClearLinkText();
+    }
+
+    /**
+     * Load range of product prices
+     *
+     * @param  int        $limit
+     * @param  null|int   $offset
+     * @param  null|float $lowerPrice
+     * @param  null|float $upperPrice
+     * @return array
+     */
+    public function loadPrices($limit, $offset = null, $lowerPrice = null, $upperPrice = null)
+    {
+        $prices = $this->_getResource()->loadPrices($this, $limit, $offset, $lowerPrice, $upperPrice);
+        if ($prices) {
+            return array_map(\floatval(...), $prices);
+        }
+
+        return $prices;
+    }
+
+    /**
+     * Load range of product prices, preceding the price
+     *
+     * @param  float       $price
+     * @param  int         $index
+     * @param  null|float  $lowerPrice
+     * @return array|false
+     */
+    public function loadPreviousPrices($price, $index, $lowerPrice = null)
+    {
+        $prices = $this->_getResource()->loadPreviousPrices($this, $price, $index, $lowerPrice);
+        if ($prices) {
+            return array_map(\floatval(...), $prices);
+        }
+
+        return $prices;
+    }
+
+    /**
+     * Load range of product prices, next to the price
+     *
+     * @param  float       $price
+     * @param  int         $rightIndex
+     * @param  null|float  $upperPrice
+     * @return array|false
+     */
+    public function loadNextPrices($price, $rightIndex, $upperPrice = null)
+    {
+        $prices = $this->_getResource()->loadNextPrices($this, $price, $rightIndex, $upperPrice);
+        if ($prices) {
+            return array_map(\floatval(...), $prices);
+        }
+
+        return $prices;
+    }
+}

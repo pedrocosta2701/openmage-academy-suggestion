@@ -1,0 +1,25 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Checkout_Block_Total_Default
+ * @var Mage_Checkout_Block_Total_Default $this
+ */
+?>
+<tr>
+    <td colspan="<?php echo $this->getColspan(); ?>" style="<?php echo $this->getTotal()->getStyle() ?>" class="a-right">
+        <?php if ($this->getRenderingArea() == $this->getTotal()->getArea()): ?><strong><?php endif ?>
+            <?php echo $this->escapeHtml($this->getTotal()->getTitle()); ?>
+        <?php if ($this->getRenderingArea() == $this->getTotal()->getArea()): ?></strong><?php endif ?>
+    </td>
+    <td style="<?php echo $this->getTotal()->getStyle() ?>" class="a-right">
+        <?php if ($this->getRenderingArea() == $this->getTotal()->getArea()): ?><strong><?php endif ?>
+            <?php echo $this->helper('checkout')->formatPrice($this->getTotal()->getValue()) ?>
+        <?php if ($this->getRenderingArea() == $this->getTotal()->getArea()): ?></strong><?php endif ?>
+    </td>
+</tr>

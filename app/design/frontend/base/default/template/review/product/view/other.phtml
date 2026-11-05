@@ -1,0 +1,17 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Core_Block_Template
+ * @var Mage_Core_Block_Template $this
+ */
+?>
+<?php $_product = Mage::registry('product'); ?>
+<div class="buttons-set">
+    <p class="back-link"><a href="<?php echo $_product->getProductUrl() ?>"><small>&laquo; </small><?php echo $this->__('Back to Main Product Info') ?></a></p>
+</div>

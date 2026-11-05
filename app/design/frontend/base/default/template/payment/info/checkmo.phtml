@@ -1,0 +1,25 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Payment_Block_Info_Checkmo
+ * @var Mage_Payment_Block_Info_Checkmo $this
+ */
+?>
+<p><?php echo $this->escapeHtml($this->getMethod()->getTitle()) ?></p>
+<?php if($this->getInfo()->getAdditionalData()): ?>
+    <?php if($this->getPayableTo()): ?>
+        <p><strong><?php echo $this->__('Make Check payable to:') ?></strong> <?php echo $this->escapeHtml($this->getPayableTo()) ?></p>
+    <?php endif ?>
+    <?php if($this->getMailingAddress()): ?>
+        <p><strong><?php echo Mage::helper('payment')->__('Send Check to:') ?></strong></p>
+        <address class="checkmo-mailing-address">
+            <?php echo nl2br($this->escapeHtml($this->getMailingAddress())) ?>
+        </address>
+    <?php endif ?>
+<?php endif ?>

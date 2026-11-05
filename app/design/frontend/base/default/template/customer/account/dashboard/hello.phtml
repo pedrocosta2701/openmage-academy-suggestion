@@ -1,0 +1,14 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Customer_Block_Account_Dashboard_Hello $this */
+?>
+<div class="welcome-msg">
+    <p class="hello"><strong><?php echo $this->__('Hello, %s!', $this->escapeHtml($this->getCustomerName())) ?></strong></p>
+    <p><?php echo $this->__('From your My Account Dashboard you have the ability to view a snapshot of your recent account activity and update your account information. Select a link below to view or edit information.') ?></p>
+</div>

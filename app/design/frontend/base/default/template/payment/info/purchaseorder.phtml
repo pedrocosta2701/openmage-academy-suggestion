@@ -1,0 +1,15 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Payment_Block_Info_Purchaseorder
+ * @var Mage_Payment_Block_Info_Purchaseorder $this
+ */
+?>
+<p><?php echo $this->escapeHtml($this->getMethod()->getTitle()) ?></p>
+<p><strong><?php echo $this->__('Purchase Order Number:') ?></strong> <span class="nobr"><?php echo $this->escapeHtml($this->getInfo()->getPoNumber()) ?></span></p>

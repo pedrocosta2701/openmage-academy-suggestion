@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Usa
+ */
+
+/**
+ * DHL International (API v1.4) Label Creation
+ *
+ * @package    Mage_Usa
+ * @deprecated now the process of creating the label is on DHL side
+ */
+class Mage_Usa_Model_Shipping_Carrier_Dhl_Label_Pdf_Page extends Zend_Pdf_Page
+{
+    /**
+     * Text align constants
+     */
+    public const ALIGN_RIGHT = 'right';
+
+    public const ALIGN_LEFT = 'left';
+
+    public const ALIGN_CENTER = 'center';
+
+    /**
+     * Dhl International Label Creation Class Pdf Page constructor
+     * Create/Make a copy of pdf page
+     *
+     * @param  Mage_Usa_Model_Shipping_Carrier_Dhl_Label_Pdf_Page|string $param1
+     * @param  mixed                                                     $param2
+     * @param  mixed                                                     $param3
+     * @throws Zend_Pdf_Exception
+     */
+    public function __construct($param1, $param2 = null, $param3 = null)
+    {
+        if ($param1 instanceof Mage_Usa_Model_Shipping_Carrier_Dhl_Label_Pdf_Page
+            && $param2 === null && $param3 === null
+        ) {
+            $this->_contents = $param1->getContents();
+        }
+
+        parent::__construct($param1, $param2, $param3);
+    }
+
+    /**
+     * Get PDF Page contents
+     *
+     * @return string
+     */
+    #[Override]
+    public function getContents()
+    {
+        return $this->_contents;
+    }
+
+    /**
+     * Calculate the width of given text in points taking into account current font and font-size
+     *
+     * @param  string             $text
+     * @param  float              $fontSize
+     * @return float
+     * @throws Zend_Pdf_Exception
+     */
+    public function getTextWidth($text, Zend_Pdf_Resource_Font $font, $fontSize)
+    {
+        $drawingText = iconv('', 'UTF-16BE', $text);
+        $characters = [];
+        for ($index = 0; $index < strlen($drawingText); $index++) {
+            $characters[] = (ord($drawingText[$index++]) << 8) | ord($drawingText[$index]);
+        }
+
+        $glyphs = $font->glyphNumbersForCharacters($characters);
+        /** @var array<int> $widths */
+        $widths = $font->widthsForGlyphs($glyphs);
+        return (array_sum($widths) / $font->getUnitsPerEm()) * $fontSize;
+    }
+
+    /**
+     * @inheritDoc
+     * @SuppressWarnings("PHPMD.ShortVariable")
+     */
+    #[Override]
+    public function drawText($text, $x, $y, $charEncoding = 'UTF-8', $align = self::ALIGN_LEFT)
+    {
+        $left = null;
+        switch ($align) {
+            case self::ALIGN_LEFT:
+                $left = $x;
+                break;
+
+            case self::ALIGN_CENTER:
+                $textWidth = $this->getTextWidth($text, $this->getFont(), $this->getFontSize());
+                $left = $x - ($textWidth / 2);
+                break;
+
+            case self::ALIGN_RIGHT:
+                $textWidth = $this->getTextWidth($text, $this->getFont(), $this->getFontSize());
+                $left = $x - $textWidth;
+                break;
+        }
+
+        return parent::drawText($text, $left, $y, $charEncoding);
+    }
+
+    /**
+     * Draw a text paragraph taking into account the maximum number of symbols in a row.
+     * If line is longer - spit it.
+     *
+     * @param  array|SimpleXMLElement $lines
+     * @param  int                    $xAxis
+     * @param  int                    $yAxis
+     * @param  int                    $maxWidth - number of symbols
+     * @param  self::ALIGN_*          $align
+     * @return float
+     * @throws Zend_Pdf_Exception
+     */
+    public function drawLines($lines, $xAxis, $yAxis, $maxWidth, $align = self::ALIGN_LEFT)
+    {
+        foreach ($lines as $line) {
+            if (strlen($line) > $maxWidth) {
+                $subLines = Mage::helper('core/string')->str_split($line, $maxWidth, true, true);
+                $yAxis = $this->drawLines(array_filter($subLines), $xAxis, $yAxis, $maxWidth, $align);
+                continue;
+            }
+
+            $this->drawText($line, $xAxis, $yAxis, 'UTF-8', $align);
+            $yAxis -= ceil($this->getFontSize());
+        }
+
+        return $yAxis;
+    }
+}

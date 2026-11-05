@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Uploader
+ */
+-->
+<config>
+    <modules>
+        <Mage_Uploader>
+            <version>0.1.0</version>
+        </Mage_Uploader>
+    </modules>
+    <global>
+        <blocks>
+            <uploader>
+                <class>Mage_Uploader_Block</class>
+            </uploader>
+        </blocks>
+        <helpers>
+            <uploader>
+                <class>Mage_Uploader_Helper</class>
+            </uploader>
+        </helpers>
+        <models>
+            <uploader>
+                <class>Mage_Uploader_Model</class>
+            </uploader>
+        </models>
+    </global>
+    <adminhtml>
+        <translate>
+            <modules>
+                <Mage_Uploader>
+                    <files>
+                        <default>Mage_Uploader.csv</default>
+                    </files>
+                </Mage_Uploader>
+            </modules>
+        </translate>
+    </adminhtml>
+    <frontend>
+        <translate>
+            <modules>
+                <Mage_Uploader>
+                    <files>
+                        <default>Mage_Uploader.csv</default>
+                    </files>
+                </Mage_Uploader>
+            </modules>
+        </translate>
+    </frontend>
+</config>

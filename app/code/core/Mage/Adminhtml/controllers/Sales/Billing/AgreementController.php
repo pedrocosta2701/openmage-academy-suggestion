@@ -1,0 +1,202 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Adminhtml billing agreement controller
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Sales_Billing_AgreementController extends Mage_Adminhtml_Controller_Action
+{
+    /**
+     * Billing agreements
+     * @return void
+     */
+    public function indexAction()
+    {
+        $this->_title($this->__('Sales'))
+            ->_title($this->__('Billing Agreements'));
+
+        $this->loadLayout()
+            ->_setActiveMenu('sales/billing_agreement')
+            ->renderLayout();
+    }
+
+    /**
+     * Ajax action for billing agreements
+     * @return void
+     */
+    public function gridAction()
+    {
+        $this->loadLayout(false)
+            ->renderLayout();
+    }
+
+    /**
+     * View billing agreement action
+     * @return void
+     */
+    public function viewAction()
+    {
+        $agreementModel = $this->_initBillingAgreement();
+
+        if ($agreementModel) {
+            $this->_title($this->__('Sales'))
+                ->_title($this->__('Billing Agreements'))
+                ->_title(sprintf('#%s', $agreementModel->getReferenceId()));
+
+            $this->loadLayout()
+                ->_setActiveMenu('sales/billing_agreement')
+                ->renderLayout();
+            return;
+        }
+
+        $this->_redirect('*/*/');
+    }
+
+    /**
+     * Related orders ajax action
+     * @return void
+     */
+    public function ordersGridAction()
+    {
+        $this->_initBillingAgreement();
+        $this->loadLayout(false)
+            ->renderLayout();
+    }
+
+    /**
+     * Customer billing agreements ajax action
+     * @return void
+     */
+    public function customerGridAction()
+    {
+        $this->_initCustomer();
+        $this->loadLayout(false)
+            ->renderLayout();
+    }
+
+    /**
+     * Cancel billing agreement action
+     * @return $this|void
+     */
+    public function cancelAction()
+    {
+        $agreementModel = $this->_initBillingAgreement();
+
+        if ($agreementModel && $agreementModel->canCancel()) {
+            try {
+                $agreementModel->cancel();
+                $this->_getSession()->addSuccess($this->__('The billing agreement has been canceled.'));
+                $this->_redirect('*/*/view', ['_current' => true]);
+                return;
+            } catch (Mage_Core_Exception $mageCoreException) {
+                $this->_getSession()->addError($mageCoreException->getMessage());
+            } catch (Exception $exception) {
+                $this->_getSession()->addError($this->__('Failed to cancel the billing agreement.'));
+                Mage::logException($exception);
+            }
+
+            $this->_redirect('*/*/view', ['_current' => true]);
+        }
+
+        return $this->_redirect('*/*/');
+    }
+
+    /**
+     * Delete billing agreement action
+     * @return void
+     */
+    public function deleteAction()
+    {
+        $agreementModel = $this->_initBillingAgreement();
+
+        if ($agreementModel) {
+            try {
+                $agreementModel->delete();
+                $this->_getSession()->addSuccess($this->__('The billing agreement has been deleted.'));
+                $this->_redirect('*/*/');
+                return;
+            } catch (Mage_Core_Exception $mageCoreException) {
+                $this->_getSession()->addError($mageCoreException->getMessage());
+            } catch (Exception $exception) {
+                $this->_getSession()->addError($this->__('Failed to delete the billing agreement.'));
+                Mage::logException($exception);
+            }
+
+            $this->_redirect('*/*/view', ['_current' => true]);
+        }
+
+        $this->_redirect('*/*/');
+    }
+
+    /**
+     * Initialize billing agreement by ID specified in request
+     *
+     * @return false|Mage_Sales_Model_Billing_Agreement
+     */
+    protected function _initBillingAgreement()
+    {
+        $agreementId = $this->getRequest()->getParam('agreement');
+        $agreementModel = Mage::getModel('sales/billing_agreement')->load($agreementId);
+
+        if (!$agreementModel->getId()) {
+            $this->_getSession()->addError($this->__('Wrong billing agreement ID specified.'));
+            return false;
+        }
+
+        Mage::register('current_billing_agreement', $agreementModel);
+        return $agreementModel;
+    }
+
+    /**
+     * Initialize customer by ID specified in request
+     *
+     * @return $this
+     */
+    protected function _initCustomer()
+    {
+        $customerId = (int) $this->getRequest()->getParam('id');
+        $customer = Mage::getModel('customer/customer');
+
+        if ($customerId) {
+            $customer->load($customerId);
+        }
+
+        Mage::register('current_customer', $customer);
+        return $this;
+    }
+
+    /**
+     * Retrieve adminhtml session
+     *
+     * @return Mage_Adminhtml_Model_Session
+     */
+    #[Override]
+    protected function _getSession()
+    {
+        return Mage::getSingleton('adminhtml/session');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _isAllowed(): bool
+    {
+        $action = strtolower($this->getRequest()->getActionName());
+        $aclPath = match ($action) {
+            'index', 'grid', 'view' => 'sales/billing_agreement/actions/view',
+            'cancel', 'delete' => 'sales/billing_agreement/actions/manage',
+            default => 'sales/billing_agreement',
+        };
+
+        return Mage::getSingleton('admin/session')->isAllowed($aclPath);
+    }
+}

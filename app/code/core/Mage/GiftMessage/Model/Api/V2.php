@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_GiftMessage
+ */
+
+/**
+ * GiftMessage api
+ *
+ * @package    Mage_GiftMessage
+ */
+class Mage_GiftMessage_Model_Api_V2 extends Mage_GiftMessage_Model_Api
+{
+    /**
+     * Return an Array of Object attributes.
+     *
+     * @param  array|object $data
+     * @return array
+     */
+    #[Override]
+    protected function _prepareData($data)
+    {
+        if (is_object($data)) {
+            $arr = get_object_vars($data);
+            foreach ($arr as $key => $value) {
+                $assocArr = [];
+                if (is_array($value)) {
+                    foreach ($value as $item) {
+                        if (is_object($item) && count(get_object_vars($item)) == 2
+                            && isset($item->key) && isset($item->value)
+                        ) {
+                            $assocArr[$item->key] = $item->value;
+                        }
+                    }
+                }
+
+                if ($assocArr !== []) {
+                    $arr[$key] = $assocArr;
+                }
+            }
+
+            $arr = $this->_prepareData($arr);
+            return parent::_prepareData($arr);
+        }
+
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = is_object($value) || is_array($value) ? $this->_prepareData($value) : $value;
+            }
+
+            return parent::_prepareData($data);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Raise event for setting a giftMessage.
+     *
+     * @param  String                            $entityId
+     * @param  Mage_Core_Controller_Request_Http $request
+     * @param  Mage_Sales_Model_Quote            $quote
+     * @return stdClass
+     */
+    #[Override]
+    protected function _setGiftMessage($entityId, $request, $quote)
+    {
+        $response = new stdClass();
+        $response->entityId = $entityId;
+
+        /**
+         * Below code will catch exceptions only in DeveloperMode
+         * @see Mage_Core_Model_App::_callObserverMethod($object, $method, $observer)
+         * And result of Mage::dispatchEvent will always return an Object of Mage_Core_Model_App.
+         */
+        try {
+            Mage::dispatchEvent('checkout_controller_onepage_save_shipping_method', ['request' => $request, 'quote' => $quote]);
+            $response->result = true;
+            $response->error = '';
+        } catch (Exception $exception) {
+            $response->result = false;
+            $response->error = $exception->getMessage();
+        }
+
+        return $response;
+    }
+}

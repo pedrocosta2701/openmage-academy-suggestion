@@ -1,0 +1,18 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Wishlist_Block_Share_Email_Rss
+ * @var Mage_Wishlist_Block_Share_Email_Rss $this
+ */
+?>
+<p style="font-size:12px; line-height:16px; margin:0 0 16px;">
+    <?php echo $this->__("RSS link to %s's wishlist", Mage::helper('core')->quoteEscape($this->helper('wishlist')->getCustomerName())) ?>
+    <br />
+    <a href="<?php echo $this->helper('wishlist')->getRssUrl($this->getWishlistId()); ?>"><?php echo $this->helper('wishlist')->getRssUrl($this->getWishlistId()); ?></a>
+</p>

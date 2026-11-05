@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Shipment tracking control form
+ *
+ * @package    Mage_Adminhtml
+ *
+ * @property Mage_Sales_Model_Order_Shipment_Track $trackingInfo
+ */
+class Mage_Adminhtml_Block_Sales_Order_Shipment_Tracking_Info extends Mage_Adminhtml_Block_Template
+{
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _construct()
+    {
+        parent::_construct();
+        $this->setTemplate('sales/order/shipment/tracking/info.phtml');
+    }
+}

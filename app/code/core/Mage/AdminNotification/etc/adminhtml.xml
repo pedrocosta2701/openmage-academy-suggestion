@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_AdminNotification
+ */
+-->
+<config>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <adminnotification translate="title" module="adminnotification">
+                                <title>Notifications</title>
+                                <sort_order>10</sort_order>
+                                <children>
+                                    <show_toolbar translate="title">
+                                        <title>Show Toolbar</title>
+                                        <sort_order>10</sort_order>
+                                    </show_toolbar>
+                                    <show_list translate="title">
+                                        <title>Show List</title>
+                                        <sort_order>20</sort_order>
+                                    </show_list>
+                                    <mark_as_read translate="title">
+                                        <title>Mark as read</title>
+                                        <sort_order>30</sort_order>
+                                    </mark_as_read>
+                                    <remove translate="title">
+                                        <title>Remove</title>
+                                        <sort_order>40</sort_order>
+                                    </remove>
+                                </children>
+                            </adminnotification>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+    <menu>
+        <system>
+            <children>
+                <adminnotification translate="title" module="adminnotification">
+                    <title>Notifications</title>
+                    <action>adminhtml/notification</action>
+                    <sort_order>15</sort_order>
+                </adminnotification>
+            </children>
+        </system>
+    </menu>
+</config>

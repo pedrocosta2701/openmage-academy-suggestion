@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Paypal
+ */
+-->
+<config>
+    <menu>
+        <report>
+            <children>
+                <salesroot translate="title">
+                    <children>
+                        <paypal_settlement_reports translate="title">
+                            <title>PayPal Settlement Reports</title>
+                            <action>adminhtml/paypal_reports</action>
+                            <sort_order>100</sort_order>
+                        </paypal_settlement_reports>
+                    </children>
+                </salesroot>
+            </children>
+        </report>
+    </menu>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <config>
+                                <children>
+                                    <paypal>
+                                        <title>PayPal</title>
+                                    </paypal>
+                                </children>
+                            </config>
+                        </children>
+                    </system>
+                    <report>
+                        <children>
+                            <salesroot>
+                                <children>
+                                    <paypal_settlement_reports translate="title">
+                                        <title>PayPal Settlement Reports</title>
+                                        <children>
+                                            <view translate="title">
+                                                <title>View</title>
+                                            </view>
+                                            <fetch translate="title">
+                                                <title>Fetch</title>
+                                            </fetch>
+                                        </children>
+                                    </paypal_settlement_reports>
+                                </children>
+                            </salesroot>
+                        </children>
+                    </report>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+</config>

@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Varien_Convert
+ */
+
+/**
+ * Convert mapper abstract
+ *
+ * @package    Varien_Convert
+ */
+abstract class Varien_Convert_Mapper_Abstract extends Varien_Convert_Container_Abstract implements Varien_Convert_Mapper_Interface {}

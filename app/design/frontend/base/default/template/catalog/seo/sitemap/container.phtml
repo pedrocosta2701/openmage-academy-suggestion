@@ -1,0 +1,22 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Page_Block_Template_Container $this */
+?>
+<div class="page-sitemap">
+    <div class="page-title">
+        <h1><?php echo $this->getTitle() ?></h1>
+    </div>
+    <div id="sitemap_top_links">
+        <?php echo $this->getChildHtml('links') ?>
+    </div>
+    <?php echo $this->getChildHtml('pager_top') ?>
+    <?php echo $this->getChildHtml('sitemap') ?>
+    <?php echo $this->getChildHtml('links') ?>
+    <?php echo $this->getChildHtml('pager_bottom') ?>
+</div>

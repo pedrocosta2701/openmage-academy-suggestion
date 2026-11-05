@@ -1,0 +1,460 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Api
+ */
+
+/**
+ * Api model
+ *
+ * @package    Mage_Api
+ *
+ * @method Mage_Api_Model_Resource_User            _getResource()
+ * @method string                                  getApiKey()
+ * @method string                                  getApiKeyConfirmation()
+ * @method string                                  getCreated()
+ * @method string                                  getEmail()
+ * @method string                                  getFirstname()
+ * @method int                                     getIsActive()
+ * @method string                                  getLastname()
+ * @method string                                  getLogdate()
+ * @method int                                     getLognum()
+ * @method string                                  getModified()
+ * @method string                                  getNewApiKey()
+ * @method int                                     getReloadAclFlag()
+ * @method Mage_Api_Model_Resource_User            getResource()
+ * @method Mage_Api_Model_Resource_User_Collection getResourceCollection()
+ * @method int                                     getRoleId()
+ * @method array                                   getRoleIds()
+ * @method string                                  getSessid()
+ * @method string                                  getUserId()
+ * @method string                                  getUsername()
+ * @method bool                                    hasApiKey()
+ * @method bool                                    hasApiKeyConfirmation()
+ * @method bool                                    hasNewApiKey()
+ * @method $this                                   setApiKey(string $value)
+ * @method $this                                   setCreated(string $value)
+ * @method $this                                   setEmail(string $value)
+ * @method $this                                   setFirstname(string $value)
+ * @method $this                                   setIsActive(int $value)
+ * @method $this                                   setLastname(string $value)
+ * @method $this                                   setLogdate(string $value)
+ * @method $this                                   setLognum(int $value)
+ * @method $this                                   setModified(string $value)
+ * @method $this                                   setReloadAclFlag(int $value)
+ * @method $this                                   setRoleIds(array $value)
+ * @method $this                                   setRoleUserId(int $value)
+ * @method $this                                   setSessid($sessId)
+ * @method $this                                   setUsername(string $value)
+ */
+class Mage_Api_Model_User extends Mage_Core_Model_Abstract
+{
+    /**
+     * @var string
+     */
+    protected $_eventPrefix = 'api_user';
+
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init('api/user');
+    }
+
+    /**
+     * @return $this
+     */
+    #[Override]
+    public function save()
+    {
+        $this->_beforeSave();
+        $data = [
+            'firstname' => $this->getFirstname(),
+            'lastname'  => $this->getLastname(),
+            'email'     => $this->getEmail(),
+            'modified'  => Mage::getSingleton('core/date')->gmtDate(),
+        ];
+
+        if ($this->getId() > 0) {
+            $data['user_id']   = $this->getId();
+        }
+
+        if ($this->getUsername()) {
+            $data['username']   = $this->getUsername();
+        }
+
+        if ($this->getApiKey()) {
+            $data['api_key']   = $this->_getEncodedApiKey($this->getApiKey());
+        }
+
+        if ($this->getNewApiKey()) {
+            $data['api_key']   = $this->_getEncodedApiKey($this->getNewApiKey());
+        }
+
+        if (!is_null($this->getIsActive())) {
+            $data['is_active']  = (int) $this->getIsActive();
+        }
+
+        $this->setData($data);
+        $this->_getResource()->save($this);
+        $this->_afterSave();
+        return $this;
+    }
+
+    /**
+     * Delete user
+     *
+     * @return $this|Mage_Core_Model_Abstract
+     * @throws Mage_Core_Exception
+     */
+    #[Override]
+    public function delete()
+    {
+        $this->_beforeDelete();
+        $this->_getResource()->delete($this);
+        $this->_afterDelete();
+        return $this;
+    }
+
+    /**
+     * Save relations for users
+     *
+     * @return $this
+     * @throws Mage_Core_Exception
+     */
+    public function saveRelations()
+    {
+        $this->_getResource()->_saveRelations($this);
+        return $this;
+    }
+
+    /**
+     * Get user roles
+     *
+     * @return array
+     */
+    public function getRoles()
+    {
+        return $this->_getResource()->_getRoles($this);
+    }
+
+    /**
+     * Delete user from role
+     *
+     * @return $this
+     */
+    public function deleteFromRole()
+    {
+        $this->_getResource()->deleteFromRole($this);
+        return $this;
+    }
+
+    /**
+     * Check is user role exists
+     *
+     * @return bool
+     */
+    public function roleUserExists()
+    {
+        $result = $this->_getResource()->roleUserExists($this);
+        return is_array($result) && $result !== [];
+    }
+
+    /**
+     * Add user
+     *
+     * @return $this
+     */
+    public function add()
+    {
+        $this->_getResource()->add($this);
+        return $this;
+    }
+
+    /**
+     * Check if user exists
+     *
+     * @return bool
+     */
+    public function userExists()
+    {
+        $result = $this->_getResource()->userExists($this);
+        return is_array($result) && $result !== [];
+    }
+
+    /**
+     * Get collection of users
+     *
+     * @return Mage_Api_Model_Resource_User_Collection|Object
+     */
+    #[Override]
+    public function getCollection()
+    {
+        return Mage::getResourceModel('api/user_collection');
+    }
+
+    /**
+     * Get user's name
+     *
+     * @param  string $separator
+     * @return string
+     */
+    public function getName($separator = ' ')
+    {
+        return $this->getFirstname() . $separator . $this->getLastname();
+    }
+
+    /**
+     * Get user's id
+     *
+     * @return string
+     */
+    #[Override]
+    public function getId()
+    {
+        return $this->getUserId();
+    }
+
+    /**
+     * Get user ACL role
+     *
+     * @return string
+     */
+    public function getAclRole()
+    {
+        return 'U' . $this->getUserId();
+    }
+
+    /**
+     * Authenticate user name and api key and save loaded record
+     *
+     * @param  string    $username
+     * @param  string    $apiKey
+     * @return bool
+     * @throws Exception
+     */
+    public function authenticate($username, $apiKey)
+    {
+        $this->loadByUsername($username);
+        if (!$this->getId()) {
+            return false;
+        }
+
+        $auth = Mage::helper('core')->validateHash($apiKey, $this->getApiKey());
+        if ($auth) {
+            return true;
+        }
+
+        $this->unsetData();
+        return false;
+    }
+
+    /**
+     * Login user
+     *
+     * @param  string    $username
+     * @param  string    $apiKey
+     * @return $this
+     * @throws Exception
+     */
+    public function login($username, $apiKey)
+    {
+        $username = new Mage_Core_Model_Security_Obfuscated($username);
+        $apiKey = new Mage_Core_Model_Security_Obfuscated($apiKey);
+
+        $sessId = $this->getSessid();
+        if ($this->authenticate($username, $apiKey)) {
+            $this->setSessid($sessId);
+            $this->getResource()->cleanOldSessions($this)
+                ->recordLogin($this)
+                ->recordSession($this);
+            Mage::dispatchEvent('api_user_authenticated', [
+                'model'    => $this,
+                'api_key'  => $apiKey,
+            ]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Reload user
+     *
+     * @return $this
+     */
+    public function reload()
+    {
+        $this->load($this->getId());
+        return $this;
+    }
+
+    /**
+     * Load user by username
+     *
+     * @param  string $username
+     * @return $this
+     */
+    public function loadByUsername($username)
+    {
+        $this->setData($this->getResource()->loadByUsername($username));
+        return $this;
+    }
+
+    /**
+     * Load user by session id
+     *
+     * @param  string $sessId
+     * @return $this
+     */
+    public function loadBySessId($sessId)
+    {
+        $this->setData($this->getResource()->loadBySessId($sessId));
+        return $this;
+    }
+
+    /**
+     * Logout user by session id
+     *
+     * @param  string $sessid
+     * @return $this
+     */
+    public function logoutBySessId($sessid)
+    {
+        $this->getResource()->clearBySessId($sessid);
+        return $this;
+    }
+
+    /**
+     * Check if user is assigned to role
+     *
+     * @param  int|Mage_Core_Model_Abstract $user
+     * @return array
+     */
+    public function hasAssigned2Role($user)
+    {
+        return $this->getResource()->hasAssigned2Role($user);
+    }
+
+    /**
+     * Retrieve encoded api key
+     *
+     * @param  string $apiKey
+     * @return string
+     */
+    protected function _getEncodedApiKey($apiKey)
+    {
+        return Mage::helper('core')->getHash($apiKey, Mage_Admin_Model_User::HASH_SALT_LENGTH);
+    }
+
+    /**
+     * Get helper instance
+     *
+     * @param  string                    $helperName
+     * @return Mage_Core_Helper_Abstract
+     */
+    protected function _getHelper($helperName)
+    {
+        return Mage::helper($helperName);
+    }
+
+    /**
+     * Validate user attribute values.
+     *
+     * @return array|true
+     */
+    public function validate()
+    {
+        $validator  = $this->getValidationHelper();
+        $violations = new ArrayObject();
+        $errors     = new ArrayObject();
+
+        $violations->append($validator->validateNotEmpty(
+            value: $this->getUsername(),
+            message: Mage::helper('api')->__('User Name is required field.'),
+        ));
+
+        $violations->append($validator->validateNotEmpty(
+            value: $this->getFirstname(),
+            message: Mage::helper('api')->__('First Name is required field.'),
+        ));
+
+        $violations->append($validator->validateNotEmpty(
+            value: $this->getLastname(),
+            message: Mage::helper('api')->__('Last Name is required field.'),
+        ));
+
+        $violations->append($validator->validateEmail(
+            value: $this->getEmail(),
+            message: Mage::helper('adminhtml')->__('Please enter a valid email.'),
+        ));
+
+        if ($this->hasNewApiKey()) {
+            $apiKey = $this->getNewApiKey();
+        } elseif ($this->hasApiKey()) {
+            $apiKey = $this->getApiKey();
+        }
+
+        if (isset($apiKey)) {
+            $minCustomerPasswordLength = $this->_getMinCustomerPasswordLength();
+            $violations->append($validator->validateLength(
+                value: $apiKey,
+                min: $minCustomerPasswordLength,
+                minMessage: $this->_getHelper('api')
+                    ->__('Api Key must be at least of %d characters.', $minCustomerPasswordLength),
+            ));
+
+            $violations->append($validator->validateRegex(
+                value: $apiKey,
+                pattern: '/[a-z]/iu',
+                message: $this->_getHelper('api')
+                    ->__('Api Key must include both numeric and alphabetic characters.'),
+            ));
+
+            $violations->append($validator->validateRegex(
+                value: $apiKey,
+                pattern: '/[0-9]/u',
+                message: $this->_getHelper('api')
+                    ->__('Api Key must include both numeric and alphabetic characters.'),
+            ));
+
+            if ($this->hasApiKeyConfirmation()) {
+                $violations->append($validator->validateIdentical(
+                    value: $apiKey,
+                    compare: $this->getApiKeyConfirmation(),
+                    message: $this->_getHelper('api')->__('Api Key confirmation must be same as Api Key.'),
+                ));
+            }
+        }
+
+        foreach ($violations as $violation) {
+            foreach ($violation as $error) {
+                $errors->append($error->getMessage());
+            }
+        }
+
+        if ($this->userExists()) {
+            $errors->append($this->_getHelper('api')
+                ->__('A user with the same user name or email already exists.'));
+        }
+
+        if (count($errors) === 0) {
+            return true;
+        }
+
+        return (array) $errors;
+    }
+
+    /**
+     * Get min customer password length
+     *
+     * @return int
+     */
+    protected function _getMinCustomerPasswordLength()
+    {
+        return Mage::getSingleton('customer/customer')->getMinPasswordLength();
+    }
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Reports
+ */
+-->
+<widgets>
+    <recently_viewed type="reports/product_widget_viewed" translate="name description" module="reports">
+        <name>Recently Viewed Products</name>
+        <description>List of Products Recently Viewed by Visitor</description>
+        <parameters>
+            <page_size translate="label">
+                <required>1</required>
+                <visible>1</visible>
+                <value>5</value>
+                <label>Number of Products to display</label>
+                <type>text</type>
+            </page_size>
+            <template>
+                <required>1</required>
+                <visible>1</visible>
+                <label>Template</label>
+                <type>select</type>
+                <value>reports/product/widget/viewed_grid.phtml</value>
+                <values>
+                    <default translate="label">
+                        <value>reports/widget/viewed/content/viewed_grid.phtml</value>
+                        <label>Viewed Products Grid Template</label>
+                    </default>
+                    <list translate="label">
+                        <value>reports/widget/viewed/content/viewed_list.phtml</value>
+                        <label>Viewed Products List Template</label>
+                    </list>
+                </values>
+            </template>
+        </parameters>
+    </recently_viewed>
+    <recently_compared type="reports/product_widget_compared" translate="name description" module="reports">
+        <name>Recently Compared Products</name>
+        <description>List of Products Recently Compared and Removed from the Compare List by Visitor</description>
+        <parameters>
+            <page_size translate="label">
+                <required>1</required>
+                <visible>1</visible>
+                <value>5</value>
+                <label>Number of Products to display</label>
+                <type>text</type>
+            </page_size>
+            <template>
+                <required>1</required>
+                <visible>1</visible>
+                <label>Template</label>
+                <type>select</type>
+                <value>reports/product/widget/viewed_grid.phtml</value>
+                <values>
+                    <default translate="label">
+                        <value>reports/widget/compared/content/compared_grid.phtml</value>
+                        <label>Compared Products Grid Template</label>
+                    </default>
+                    <list translate="label">
+                        <value>reports/widget/compared/content/compared_list.phtml</value>
+                        <label>Compared Products List Template</label>
+                    </list>
+                </values>
+            </template>
+        </parameters>
+    </recently_compared>
+</widgets>

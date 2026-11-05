@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_CurrencySymbol
+ */
+-->
+<config>
+    <modules>
+        <Mage_CurrencySymbol>
+             <version>1.0.0.0.0</version>
+        </Mage_CurrencySymbol>
+    </modules>
+
+    <global>
+        <models>
+            <currencysymbol>
+                <class>Mage_CurrencySymbol_Model</class>
+            </currencysymbol>
+        </models>
+        <helpers>
+            <currencysymbol>
+                <class>Mage_CurrencySymbol_Helper</class>
+            </currencysymbol>
+        </helpers>
+        <blocks>
+            <currencysymbol>
+                <class>Mage_CurrencySymbol_Block</class>
+            </currencysymbol>
+        </blocks>
+        <events>
+            <currency_display_options_forming>
+                <observers>
+                    <mage_currencysymbol_currency_display_options>
+                        <class>currencysymbol/observer</class>
+                        <method>currencyDisplayOptions</method>
+                    </mage_currencysymbol_currency_display_options>
+                </observers>
+            </currency_display_options_forming>
+        </events>
+    </global>
+
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <currencysymbol>Mage_CurrencySymbol_Adminhtml</currencysymbol>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+
+    <adminhtml>
+        <layout>
+            <updates>
+                <currencysymbol>
+                    <file>currencysymbol.xml</file>
+                </currencysymbol>
+            </updates>
+        </layout>
+        <translate>
+            <modules>
+                <Mage_CurrencySymbol>
+                     <files>
+                          <default>Mage_CurrencySymbol.csv</default>
+                     </files>
+                </Mage_CurrencySymbol>
+            </modules>
+        </translate>
+    </adminhtml>
+</config>

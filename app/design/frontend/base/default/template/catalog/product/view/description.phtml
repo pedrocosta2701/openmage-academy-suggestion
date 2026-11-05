@@ -1,0 +1,22 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * Product description template
+ *
+ * @see Mage_Catalog_Block_Product_View_Description
+ * @var Mage_Catalog_Block_Product_View_Description $this 
+ */
+?>
+<?php $_description = $this->getProduct()->getDescription(); ?>
+<?php if ($_description): ?>
+    <h2><?php echo $this->__('Details') ?></h2>
+    <div class="std">
+        <?php echo $this->helper('catalog/output')->productAttribute($this->getProduct(), $_description, 'description') ?>
+    </div>
+<?php endif ?>

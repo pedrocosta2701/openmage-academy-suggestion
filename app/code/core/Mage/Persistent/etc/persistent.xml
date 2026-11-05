@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Persistent
+ */
+-->
+<config>
+    <instances>
+        <blocks>
+            <header>
+                <name_in_layout>header</name_in_layout>
+                <class>persistent/observer</class>
+                <method>emulateWelcomeBlock</method>
+                <block_type>Mage_Page_Block_Html_Header</block_type>
+            </header>
+            <welcome>
+                <name_in_layout>welcome</name_in_layout>
+                <class>persistent/observer</class>
+                <method>emulateWelcomeMessageBlock</method>
+                <block_type>Mage_Page_Block_Html_Welcome</block_type>
+            </welcome>
+            <account_links>
+                <name_in_layout>account.links</name_in_layout>
+                <class>persistent/observer</class>
+                <method>emulateAccountLinks</method>
+                <block_type>Mage_Page_Block_Template_Links</block_type>
+            </account_links>
+            <top_links>
+                <name_in_layout>top.links</name_in_layout>
+                <class>persistent/observer</class>
+                <method>emulateTopLinks</method>
+                <block_type>Mage_Page_Block_Template_Links</block_type>
+            </top_links>
+        </blocks>
+        <models />
+        <collections />
+    </instances>
+</config>

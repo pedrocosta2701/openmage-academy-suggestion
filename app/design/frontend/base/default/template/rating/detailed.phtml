@@ -1,0 +1,33 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Rating_Block_Entity_Detailed
+ * @var Mage_Rating_Block_Entity_Detailed $this
+ */
+?>
+<?php if(!empty($collection) && $collection->getSize()): ?>
+    <table class="ratings-table">
+        <col width="1" />
+        <col />
+        <tbody>
+            <?php foreach ($collection as $_rating): ?>
+                <?php if($_rating->getSummary()): ?>
+                    <tr>
+                        <th><?php echo $this->__($this->escapeHtml($_rating->getRatingCode())) ?></th>
+                        <td>
+                            <div class="rating-box">
+                                <div class="rating" style="width:<?php echo ceil($_rating->getSummary()) ?>%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endif ?>
+            <?php endforeach ?>
+        </tbody>
+    </table>
+<?php endif ?>

@@ -1,0 +1,16 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Core_Block_Template
+ * @var Mage_Core_Block_Template $this
+ */
+?>
+<?php if (!empty($count)):?>
+    <a href="#customer-reviews" class="nobr"><?php echo $this->__('%s Review(s)', $count) ?></a>
+<?php endif ?>

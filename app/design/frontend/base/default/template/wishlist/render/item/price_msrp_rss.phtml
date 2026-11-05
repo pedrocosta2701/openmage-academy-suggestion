@@ -1,0 +1,20 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * Template for displaying wishlist item price at rss feeds pages
+ *
+ * @var Mage_Catalog_Block_Product_Price $this
+ */
+?>
+<div class="price-box map-info">
+    <?php if ($this->helper('catalog')->canApplyMsrp($this->getProduct())): ?>
+        <a href="<?php echo $this->getProduct()->getProductUrl() ?>"><?php echo $this->__('Click for price'); ?></a>
+    <?php endif ?>
+</div>

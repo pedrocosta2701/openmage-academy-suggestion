@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Admin tag edit block
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Block_Catalog_Search_Edit extends Mage_Adminhtml_Block_Widget_Form_Container
+{
+    public function __construct()
+    {
+        $this->_objectId = 'id';
+        $this->_controller = 'catalog_search';
+        parent::__construct();
+    }
+
+    /**
+     * @return string
+     */
+    #[Override]
+    public function getHeaderText()
+    {
+        if (Mage::registry('current_catalog_search')->getId()) {
+            return Mage::helper('catalog')->__("Edit Search '%s'", $this->escapeHtml(Mage::registry('current_catalog_search')->getQueryText()));
+        }
+
+        return Mage::helper('catalog')->__('New Search');
+    }
+}

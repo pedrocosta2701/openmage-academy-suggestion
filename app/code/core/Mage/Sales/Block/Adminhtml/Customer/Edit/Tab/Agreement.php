@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Sales
+ */
+
+/**
+ * Adminhtml customer billing agreement tab
+ *
+ * @package    Mage_Sales
+ */
+class Mage_Sales_Block_Adminhtml_Customer_Edit_Tab_Agreement extends Mage_Sales_Block_Adminhtml_Billing_Agreement_Grid implements Mage_Adminhtml_Block_Widget_Tab_Interface
+{
+    protected string $_eventPrefix = 'sales_adminhtml_customer_edit_tab_agreement';
+
+    /**
+     * Columns, that should be removed from grid
+     *
+     * @var array
+     */
+    protected $_columnsToRemove = [
+        'customer_email',
+        'customer_firstname',
+        'customer_middlename',
+        'customer_lastname',
+    ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setId('customer_edit_tab_agreements');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTabLabel()
+    {
+        return $this->__('Billing Agreements');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTabTitle()
+    {
+        return $this->__('Billing Agreements');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function canShowTab()
+    {
+        $customer = Mage::registry('current_customer');
+        return (bool) $customer->getId();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isHidden()
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    public function getGridUrl()
+    {
+        return $this->getUrl('*/sales_billing_agreement/customerGrid', ['_current' => true]);
+    }
+
+    /**
+     * Defines after which tab, this tab should be rendered
+     *
+     * @return string
+     */
+    public function getAfter()
+    {
+        return 'orders';
+    }
+
+    /**
+     * Prepare collection for grid
+     *
+     * @return $this|Mage_Adminhtml_Block_Widget_Grid
+     */
+    #[Override]
+    protected function _prepareCollection()
+    {
+        $collection = Mage::getResourceModel('sales/billing_agreement_collection')
+            ->addFieldToFilter('customer_id', Mage::registry('current_customer')->getId())
+            ->setOrder('created_at');
+        $this->setCollection($collection);
+        return Mage_Adminhtml_Block_Widget_Grid::_prepareCollection();
+    }
+
+    /**
+     * Remove some columns and make other not sortable
+     *
+     * @return $this
+     */
+    #[Override]
+    protected function _prepareColumns()
+    {
+        $result = parent::_prepareColumns();
+
+        foreach (array_keys($this->_columns) as $key) {
+            if (in_array($key, $this->_columnsToRemove)) {
+                unset($this->_columns[$key]);
+            }
+        }
+
+        return $result;
+    }
+}

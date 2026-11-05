@@ -1,0 +1,18 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_CatalogInventory_Block_Qtyincrements
+ * @var Mage_CatalogInventory_Block_Qtyincrements $this 
+ */
+?>
+<?php if ($this->getProductQtyIncrements()) : ?>
+    <div class="product-pricing">
+        <?php echo $this->__('%s is available for purchase in increments of %s', $this->getProductName(), $this->getProductQtyIncrements()) ?>
+    </div>
+<?php endif ?>

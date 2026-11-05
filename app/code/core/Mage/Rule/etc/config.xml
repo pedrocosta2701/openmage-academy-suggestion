@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Rule
+ */
+-->
+<config>
+    <modules>
+        <Mage_Rule>
+            <version>1.6.0.0</version>
+        </Mage_Rule>
+    </modules>
+    <global>
+        <models>
+            <rule>
+                <class>Mage_Rule_Model</class>
+                <resourceModel>rule_resource</resourceModel>
+            </rule>
+            <rule_resource>
+                <class>Mage_Rule_Model_Resource</class>
+            </rule_resource>
+        </models>
+        <blocks>
+            <rule>
+                <class>Mage_Rule_Block</class>
+            </rule>
+        </blocks>
+    </global>
+    <adminhtml>
+        <translate>
+            <modules>
+                <Mage_Rule>
+                    <files>
+                        <default>Mage_Rule.csv</default>
+                    </files>
+                </Mage_Rule>
+            </modules>
+        </translate>
+    </adminhtml>
+    <frontend>
+        <translate>
+            <modules>
+                <Mage_Rule>
+                    <files>
+                        <default>Mage_Rule.csv</default>
+                    </files>
+                </Mage_Rule>
+            </modules>
+        </translate>
+    </frontend>
+</config>

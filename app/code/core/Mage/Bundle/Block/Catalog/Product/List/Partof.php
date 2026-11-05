@@ -1,0 +1,144 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Bundle
+ */
+
+/**
+ * Catalog product related items block
+ *
+ * @package    Mage_Bundle
+ */
+class Mage_Bundle_Block_Catalog_Product_List_Partof extends Mage_Catalog_Block_Product_Abstract
+{
+    protected $_columnCount = 4;
+
+    protected $_items;
+
+    protected $_itemCollection;
+
+    protected $_product = null;
+
+    /**
+     * @return $this
+     */
+    protected function _prepareData()
+    {
+        $collection = Mage::getModel('catalog/product')->getResourceCollection()
+            ->addAttributeToSelect(Mage::getSingleton('catalog/config')->getProductAttributes())
+            ->addAttributeToSort('position', 'asc')
+            ->addStoreFilter()
+            ->addAttributeToFilter('status', [
+                'in' => Mage::getSingleton('catalog/product_status')->getSaleableStatusIds(),
+            ])
+            ->addPriceData()
+            ->setVisibility(Mage::getSingleton('catalog/product_visibility')::getVisibleInCatalogIds())
+            ->joinTable('bundle/option', 'parent_id=entity_id', ['option_id' => 'option_id'])
+            ->joinTable('bundle/selection', 'option_id=option_id', ['product_id' => 'product_id'], '{{table}}.product_id=' . $this->getProduct()->getId());
+
+        if ($ids = Mage::getSingleton('checkout/cart')->getProductIds()) {
+            $collection->addIdFilter($ids, true);
+        }
+
+        $collection->getSelect()->group('entity_id');
+
+        $collection->load();
+        $this->_itemCollection = $collection;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _beforeToHtml()
+    {
+        $this->_prepareData();
+        return parent::_beforeToHtml();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getItemCollection()
+    {
+        return $this->_itemCollection;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getItems()
+    {
+        if (is_null($this->_items)) {
+            $this->_items = $this->getItemCollection()->getItems();
+        }
+
+        return $this->_items;
+    }
+
+    /**
+     * @return float
+     */
+    public function getRowCount()
+    {
+        return ceil($this->getItemCollection()->getSize() / $this->getColumnCount());
+    }
+
+    /**
+     * @param  array $columns
+     * @return $this
+     */
+    public function setColumnCount($columns)
+    {
+        if ((int) $columns > 0) {
+            $this->_columnCount = (int) $columns;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    #[Override]
+    public function getColumnCount()
+    {
+        return $this->_columnCount;
+    }
+
+    public function resetItemsIterator()
+    {
+        $this->getItems();
+        reset($this->_items);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIterableItem()
+    {
+        $item = current($this->_items);
+        next($this->_items);
+        return $item;
+    }
+
+    /**
+     * Get current product from registry
+     *
+     * @return Mage_Catalog_Model_Product
+     */
+    #[Override]
+    public function getProduct()
+    {
+        if (!$this->_product) {
+            $this->_product = Mage::registry('product');
+        }
+
+        return $this->_product;
+    }
+}

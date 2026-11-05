@@ -1,0 +1,30 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * Shopping cart totals template
+ *
+ * @see Mage_Checkout_Block_Cart_Totals
+ * @var Mage_Checkout_Block_Cart_Totals $this
+ */
+?>
+<?php if ($this->canApplyMsrp()): ?>
+    <div class="cart-msrp-totals"><?php echo $this->__('ORDER TOTAL WILL BE DISPLAYED BEFORE YOU SUBMIT THE ORDER'); ?></div>
+<?php else: ?>
+    <table id="shopping-cart-totals-table">
+        <col />
+        <col width="1" />
+        <tfoot>
+            <?php echo $this->renderTotals('footer'); ?>
+        </tfoot>
+        <tbody>
+            <?php echo $this->renderTotals(); ?>
+        </tbody>
+    </table>
+<?php endif ?>

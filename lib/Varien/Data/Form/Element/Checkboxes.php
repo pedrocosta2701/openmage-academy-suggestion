@@ -1,0 +1,205 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Varien_Data
+ */
+
+/**
+ * Form select element
+ *
+ * @package    Varien_Data
+ *
+ * @method array getOptions()
+ */
+class Varien_Data_Form_Element_Checkboxes extends Varien_Data_Form_Element_Abstract
+{
+    /**
+     * Init Element
+     *
+     * @param array $attributes
+     */
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setType('checkbox');
+        $this->setExtType('checkbox');
+    }
+
+    /**
+     * Retrieve allow attributes
+     *
+     * @return array<int, string>
+     */
+    #[Override]
+    public function getHtmlAttributes()
+    {
+        return ['type', 'name', 'class', 'style', 'checked', 'onclick', 'onchange', 'disabled'];
+    }
+
+    /**
+     * Prepare value list
+     *
+     * @return array
+     */
+    protected function _prepareValues()
+    {
+        $options = [];
+        $values  = [];
+
+        if ($this->getValues()) {
+            $options = is_array($this->getValues()) ? $this->getValues() : [$this->getValues()];
+        } elseif ($this->getOptions() && is_array($this->getOptions())) {
+            $options = $this->getOptions();
+        }
+
+        foreach ($options as $key => $value) {
+            if (is_string($value)) {
+                $values[] = [
+                    'label' => $value,
+                    'value' => $key,
+                ];
+            } elseif (isset($value['value'])) {
+                if (!isset($value['label'])) {
+                    $value['label'] = $value['value'];
+                }
+
+                $values[] = [
+                    'label' => $value['label'],
+                    'value' => $value['value'],
+                ];
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * Retrieve HTML
+     *
+     * @return string
+     */
+    #[Override]
+    public function getElementHtml()
+    {
+        $values = $this->_prepareValues();
+
+        if (!$values) {
+            return '';
+        }
+
+        $html  = '<ul class="checkboxes">';
+        foreach ($values as $value) {
+            $html .= $this->_optionToHtml($value);
+        }
+
+        return $html . ('</ul>'
+            . $this->getAfterElementHtml());
+    }
+
+    /**
+     * @param  string      $value
+     * @return null|string
+     */
+    public function getChecked($value)
+    {
+        if ($checked = $this->getValue()) {
+        } elseif ($checked = $this->getDataByKey('checked')) {
+        } else {
+            return null;
+        }
+
+        if (!is_array($checked)) {
+            $checked = [(string) $checked];
+        } else {
+            foreach ($checked as $key => $val) {
+                $checked[$key] = (string) $val;
+            }
+        }
+
+        if (in_array((string) $value, $checked)) {
+            return 'checked';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  string $value
+     * @return string
+     */
+    public function getDisabled($value)
+    {
+        if ($disabled = $this->getDataByKey('disabled')) {
+            if (!is_array($disabled)) {
+                $disabled = [(string) $disabled];
+            } else {
+                foreach ($disabled as $key => $val) {
+                    $disabled[$key] = (string) $val;
+                }
+            }
+
+            if (in_array((string) $value, $disabled)) {
+                return 'disabled';
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  string      $value
+     * @return null|string
+     */
+    public function getOnclick($value)
+    {
+        if ($onclick = $this->getDataByKey('onclick')) {
+            return str_replace('$value', $value, $onclick);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  string      $value
+     * @return null|string
+     */
+    public function getOnchange($value)
+    {
+        if ($onchange = $this->getDataByKey('onchange')) {
+            return str_replace('$value', $value, $onchange);
+        }
+
+        return null;
+    }
+
+    //    public function getName($value)
+    //    {
+    //        if ($name = $this->getDataByKey('name')) {
+    //            return str_replace('$value', $value, $name);
+    //        }
+    //        return ;
+    //    }
+
+    /**
+     * @param  array  $option
+     * @return string
+     */
+    protected function _optionToHtml($option)
+    {
+        $id = $this->getHtmlId() . '_' . $this->_escape($option['value']);
+
+        $html = '<li><input id="' . $id . '"';
+        foreach ($this->getHtmlAttributes() as $attribute) {
+            if ($value = $this->getDataUsingMethod($attribute, $option['value'])) {
+                $html .= ' ' . $attribute . '="' . $value . '"';
+            }
+        }
+
+        return $html . (' value="' . $option['value'] . '" />'
+            . ' <label for="' . $id . '">' . $option['label'] . '</label></li>'
+            . "\n");
+    }
+}

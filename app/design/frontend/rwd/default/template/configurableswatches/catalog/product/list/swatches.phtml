@@ -1,0 +1,80 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     rwd_default
+ */
+
+/** @var Mage_Core_Block_Template $this */
+
+/** @var Mage_Catalog_Model_Product $_product */
+$_product = $this->getProduct();
+
+/** @var Mage_ConfigurableSwatches_Model_String_Normalized[] $_attrValues */
+if (Mage::helper('configurableswatches')->isEnabled() && $_product && $_product->getId()
+    && ($_attrValues = $_product->getListSwatchAttrValues()) && count($_attrValues) > 0):
+    $_attrStockValues = $_product->getListSwatchAttrStockValues();
+    $_swatchAttribute = Mage::helper('configurableswatches/productlist')->getSwatchAttribute();
+
+    $_dimHelper = Mage::helper('configurableswatches/swatchdimensions');
+    $_swatchInnerWidth = $_dimHelper->getInnerWidth(Mage_ConfigurableSwatches_Helper_Swatchdimensions::AREA_LISTING);
+    $_swatchInnerHeight = $_dimHelper->getInnerHeight(Mage_ConfigurableSwatches_Helper_Swatchdimensions::AREA_LISTING);
+    $_swatchOuterWidth = $_dimHelper->getOuterWidth(Mage_ConfigurableSwatches_Helper_Swatchdimensions::AREA_LISTING);
+    $_swatchOuterHeight = $_dimHelper->getOuterHeight(Mage_ConfigurableSwatches_Helper_Swatchdimensions::AREA_LISTING);
+?>
+<ul class="configurable-swatch-list configurable-swatch-<?php echo $_swatchAttribute->getAttributeCode() ?> clearfix">
+    <?php foreach ($_attrValues as $_optionValue => $_optionLabel): ?>
+        <?php
+        $_optionCode = Mage::helper('configurableswatches')->getHyphenatedString($_optionLabel);
+        $_swatchUrl = Mage::helper('configurableswatches/productimg')->getSwatchUrl(
+            $_product,
+            $_optionLabel,
+            $_swatchInnerWidth,
+            $_swatchInnerHeight,
+            $_swatchType
+        );
+
+        $_label = $this->escapeHtml($_optionLabel->getOriginalValue());
+        $_hasImage = !empty($_swatchUrl);
+        $_liClass = '';
+        $_aClass = 'swatch-link swatch-link-' . $_swatchAttribute->getId();
+        if ($_hasImage) {
+            $_liClass .= $_swatchType == 'media' ? ' is-media' : '';
+            $_aClass .= ' has-image';
+        } elseif (strlen($_label) > 3) {
+            $_liClass .= ' wide-swatch';
+        }
+        if (Mage::helper('configurableswatches/productlist')->swatchMatchesFilter($_optionValue)) {
+            $_liClass .= ' filter-match';
+        }
+        ?>
+    <li class="option-<?php echo $_optionCode ?><?php echo $_liClass ?>"
+        data-product-id="<?php echo $_product->getId() ?>"
+        data-option-label="<?php echo $_optionLabel ?>">
+        <a href="javascript:void(0)"
+           name="<?php echo $_optionCode ?>"
+           class="<?php echo $_aClass ?>"
+           title="<?php echo $_label ?>"
+           style="height: <?php echo $_swatchOuterHeight ?>px;
+           <?php if (!$_hasImage): ?>min-<?php endif ?>width: <?php echo $_swatchOuterWidth ?>px;">
+            <span class="swatch-label"
+                  style="height: <?php echo $_swatchInnerHeight ?>px;
+                  <?php if (!$_hasImage): ?>min-<?php endif ?>width: <?php echo $_swatchInnerWidth ?>px; line-height: <?php echo $_swatchInnerHeight ?>px;">
+            <?php if ($_hasImage): ?>
+                <img src="<?php echo $_swatchUrl ?>"
+                     alt="<?php echo $_label ?>"
+                     width="<?php echo $_swatchInnerWidth ?>"
+                     height="<?php echo $_swatchInnerHeight ?>" />
+            <?php else: ?>
+                <?php echo $_label ?>
+            <?php endif ?>
+            </span>
+            <?php if (isset($_attrStockValues[$_optionValue]) && !$_attrStockValues[$_optionValue]): ?>
+                <span class="x" style="display: none"></span>
+            <?php endif ?>
+        </a>
+    </li>
+    <?php endforeach ?>
+</ul>
+<?php endif ?>

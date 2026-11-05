@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_SalesRule
+ */
+-->
+<config>
+    <menu>
+         <promo>
+            <children>
+                <quote translate="title" module="salesrule">
+                    <title>Shopping Cart Price Rules</title>
+                    <action>adminhtml/promo_quote/</action>
+                    <depends><module>Mage_Sales</module></depends>
+                </quote>
+            </children>
+         </promo>
+    </menu>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <promo>
+                        <children>
+                            <quote translate="title" module="salesrule">
+                                <title>Shopping Cart Price Rules</title>
+                            </quote>
+                        </children>
+                    </promo>
+                   <system>
+                       <children>
+                           <config>
+                               <children>
+                                   <promo translate="title" module="salesrule">
+                                       <title>Shopping Cart Price Rules</title>
+                                   </promo>
+                               </children>
+                           </config>
+                       </children>
+                   </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+</config>

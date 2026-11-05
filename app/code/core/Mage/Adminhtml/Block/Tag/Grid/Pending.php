@@ -1,0 +1,166 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+use Mage_Adminhtml_Block_Widget_Grid_Massaction_Abstract as MassAction;
+
+/**
+ * Adminhtml pending tags grid
+ *
+ * @package    Mage_Adminhtml
+ *
+ * @method Mage_Tag_Model_Resource_Tag_Collection getCollection()
+ */
+class Mage_Adminhtml_Block_Tag_Grid_Pending extends Mage_Adminhtml_Block_Widget_Grid
+{
+    protected string $_eventPrefix = 'adminhtml_tag_grid_pending';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setId('pending_grid')
+             ->setDefaultSort('name')
+             ->setDefaultDir('ASC')
+             ->setUseAjax(true)
+             ->setSaveParametersInSession(true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _prepareCollection()
+    {
+        $collection = Mage::getResourceModel('tag/tag_collection')
+            ->addSummary(0)
+            ->addStoresVisibility()
+            ->addStatusFilter(Mage_Tag_Model_Tag::STATUS_PENDING);
+        $this->setCollection($collection);
+        return parent::_prepareCollection();
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Exception
+     * @throws Mage_Core_Exception
+     * @throws Mage_Core_Model_Store_Exception
+     */
+    #[Override]
+    protected function _prepareColumns()
+    {
+        $this->addColumn('name', [
+            'header'        => Mage::helper('tag')->__('Tag'),
+            'index'         => 'name',
+        ]);
+
+        $this->addColumn('products', [
+            'header'        => Mage::helper('tag')->__('Products'),
+            'width'         => '140px',
+            'index'         => 'products',
+            'type'          => 'number',
+        ]);
+
+        $this->addColumn('customers', [
+            'header'        => Mage::helper('tag')->__('Customers'),
+            'width'         => '140px',
+            'index'         => 'customers',
+            'type'          => 'number',
+        ]);
+
+        // Collection for stores filters
+        if (!Mage::registry('stores_select_collection')) {
+            $collection =  Mage::app()->getStore()->getResourceCollection()
+                ->load();
+            Mage::register('stores_select_collection', $collection);
+        }
+
+        if (!Mage::app()->isSingleStoreMode()) {
+            $this->addColumn('visible_in', [
+                'type'      => 'store',
+                'index'     => 'stores',
+                'sortable'  => false,
+            ]);
+        }
+
+        return parent::_prepareColumns();
+    }
+
+    /**
+     * Retrieves row click URL
+     *
+     * @param  Varien_Object $row
+     * @return string
+     */
+    #[Override]
+    public function getRowUrl($row)
+    {
+        return $this->getUrl('*/*/edit', ['tag_id' => $row->getId(), 'ret' => 'pending']);
+    }
+
+    /**
+     * @param  Mage_Adminhtml_Block_Widget_Grid_Column $column
+     * @return $this
+     */
+    #[Override]
+    protected function _addColumnFilterToCollection($column)
+    {
+        if ($column->getIndex() === 'stores') {
+            $this->getCollection()->addStoreFilter($column->getFilter()->getCondition(), false);
+        } else {
+            parent::_addColumnFilterToCollection($column);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _prepareMassaction()
+    {
+        $this->setMassactionIdField('tag_id');
+        $this->getMassactionBlock()->setFormFieldName('tag');
+
+        $this->getMassactionBlock()->addItem(MassAction::DELETE, [
+            'label' => Mage::helper('tag')->__('Delete'),
+            'url'  => $this->getUrl('*/*/massDelete', ['ret' => 'pending']),
+        ]);
+
+        /** @var Mage_Tag_Helper_Data $helper */
+        $helper = $this->helper('tag/data');
+        $statuses = $helper->getStatusesOptionsArray();
+
+        array_unshift($statuses, ['label' => '', 'value' => '']);
+
+        $this->getMassactionBlock()->addItem(MassAction::STATUS, [
+            'label' => Mage::helper('tag')->__('Change status'),
+            'url'  => $this->getUrl('*/*/massStatus', ['_current' => true, 'ret' => 'pending']),
+            'additional' => [
+                'visibility' => [
+                    'name' => 'status',
+                    'type' => 'select',
+                    'class' => 'required-entry',
+                    'label' => Mage::helper('tag')->__('Status'),
+                    'values' => $statuses,
+                ],
+            ],
+        ]);
+
+        return parent::_prepareMassaction();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    public function getGridUrl()
+    {
+        return $this->getUrl('*/tag/ajaxPendingGrid', ['_current' => true]);
+    }
+}

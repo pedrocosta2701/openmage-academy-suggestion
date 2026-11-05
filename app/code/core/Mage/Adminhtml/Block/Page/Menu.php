@@ -1,0 +1,321 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Adminhtml menu block
+ *
+ * @package    Mage_Adminhtml
+ *
+ * @phpstan-type Menu array{
+ *     id?: string,
+ *     children?: array,
+ *     title?: string,
+ *     label: string,
+ *     sort_order: int,
+ *     url: string,
+ *     click?: 'return false',
+ *     active: bool,
+ *     level: int,
+ *     target?: Varien_Simplexml_Element,
+ *     last?: true,
+ *  }
+ *
+ * @method string getActive()
+ * @method array  getAdditionalCacheKeyInfo()
+ * @method $this  setActive(string $value)
+ * @method $this  setAdditionalCacheKeyInfo(array $cacheKeyInfo)
+ */
+class Mage_Adminhtml_Block_Page_Menu extends Mage_Adminhtml_Block_Template
+{
+    public const CACHE_TAGS = 'BACKEND_MAINMENU';
+
+    /**
+     * Adminhtml URL instance
+     *
+     * @var Mage_Adminhtml_Model_Url
+     */
+    protected $_url;
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _construct()
+    {
+        parent::_construct();
+        $this->setTemplate('page/menu.phtml');
+        $this->_url = Mage::getModel('adminhtml/url');
+        $this->setCacheTags([self::CACHE_TAGS]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    public function getCacheLifetime()
+    {
+        return 86400;
+    }
+
+    /**
+     * Get Key pieces for caching block content
+     *
+     * @return array
+     */
+    #[Override]
+    public function getCacheKeyInfo()
+    {
+        $cacheKeyInfo = [
+            'admin_top_nav',
+            $this->getActive(),
+            Mage::getSingleton('admin/session')->getUser()->getId(),
+            Mage::app()->getLocale()->getLocaleCode(),
+        ];
+        // Add additional key parameters if needed
+        $additionalCacheKeyInfo = $this->getAdditionalCacheKeyInfo();
+        if (is_array($additionalCacheKeyInfo) && $additionalCacheKeyInfo !== []) {
+            return array_merge($cacheKeyInfo, $additionalCacheKeyInfo);
+        }
+
+        return $cacheKeyInfo;
+    }
+
+    /**
+     * Retrieve Adminhtml Menu array
+     *
+     * @return Menu[]
+     */
+    public function getMenuArray()
+    {
+        $parent = Mage::getSingleton('admin/config')->getAdminhtmlConfig()->getNode('menu');
+
+        return $this->_buildMenuArray($parent);
+    }
+
+    /**
+     * Retrieve Title value for menu node
+     *
+     * @return string
+     */
+    protected function _getHelperValue(Varien_Simplexml_Element $child)
+    {
+        $helperName         = 'adminhtml';
+        $titleNodeName      = 'title';
+        $childAttributes    = $child->attributes();
+        if (isset($childAttributes['module'])) {
+            $helperName     = (string) $childAttributes['module'];
+        }
+
+        return Mage::helper($helperName)->__((string) $child->$titleNodeName);
+    }
+
+    /**
+     * Recursive Build Menu array
+     *
+     * @param  string              $path
+     * @param  int                 $level
+     * @return array<string, Menu>
+     */
+    protected function _buildMenuArray(Varien_Simplexml_Element $parent, $path = '', $level = 0)
+    {
+        $parentArr = [];
+        $sortOrder = 0;
+        foreach ($parent->children() as $childName => $child) {
+            if ((string) $child->disabled === '1') {
+                continue;
+            }
+
+            $aclResource = 'admin/' . ($child->resource ? (string) $child->resource : $path . $childName);
+            if (!$this->_checkAcl($aclResource)) {
+                continue;
+            }
+
+            if (!$this->_isEnabledModuleOutput($child)) {
+                continue;
+            }
+
+            if ($child->depends && !$this->_checkDepends($child->depends)) {
+                continue;
+            }
+
+            $menuArr = [];
+
+            $menuArr['id'] = str_replace(['/'], ['-'], $aclResource);
+
+            $menuArr['label'] = $this->_getHelperValue($child);
+
+            $menuArr['sort_order'] = $child->sort_order ? (int) $child->sort_order : $sortOrder;
+
+            if ($child->action) {
+                $menuArr['url'] = $this->_url->getUrl((string) $child->action, ['_cache_secret_key' => true]);
+            } else {
+                $menuArr['url'] = '#';
+                $menuArr['click'] = 'return false';
+            }
+
+            $menuArr['active'] = ($this->getActive() == $path . $childName)
+                || (str_starts_with((string) $this->getActive(), $path . $childName . '/'));
+
+            $menuArr['level'] = $level;
+
+            if ($child->target) {
+                $menuArr['target'] = $child->target;
+            }
+
+            if ($child->children) {
+                $menuArr['children'] = $this->_buildMenuArray($child->children, $path . $childName . '/', $level + 1);
+            }
+
+            $parentArr[$childName] = $menuArr;
+
+            $sortOrder++;
+        }
+
+        uasort($parentArr, $this->_sortMenu(...));
+
+        $last = array_key_last($parentArr);
+        if (!is_null($last)) {
+            $parentArr[$last]['last'] = true;
+        }
+
+        return $parentArr;
+    }
+
+    /**
+     * Sort menu comparison function
+     *
+     * @param  array $a
+     * @param  array $b
+     * @return int
+     */
+    protected function _sortMenu($a, $b)
+    {
+        return $a['sort_order'] <=> $b['sort_order'];
+    }
+
+    /**
+     * Check Depends
+     *
+     * @return bool
+     */
+    protected function _checkDepends(Varien_Simplexml_Element $depends)
+    {
+        if ($depends->module) {
+            $modulesConfig = Mage::getConfig()->getNode('modules');
+            foreach ($depends->module as $module) {
+                if (!$modulesConfig->$module || !$modulesConfig->$module->is('active')) {
+                    return false;
+                }
+            }
+        }
+
+        if ($depends->config) {
+            foreach ($depends->config as $path) {
+                if (!Mage::getStoreConfigFlag((string) $path)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check is Allow menu item for admin user
+     *
+     * @param  string $resource
+     * @return bool
+     */
+    protected function _checkAcl($resource)
+    {
+        try {
+            $res = Mage::getSingleton('admin/session')->isAllowed($resource);
+        } catch (Exception) {
+            return false;
+        }
+
+        return $res;
+    }
+
+    /**
+     * Processing block html after rendering
+     *
+     * @param  string $html
+     * @return string
+     */
+    #[Override]
+    protected function _afterToHtml($html)
+    {
+        return preg_replace_callback('#' . Mage_Adminhtml_Model_Url::SECRET_KEY_PARAM_NAME . '/\$([^\/].*)/([^\$].*)\$#', $this->_callbackSecretKey(...), $html);
+    }
+
+    /**
+     * Replace Callback Secret Key
+     *
+     * @param  string[] $match
+     * @return string
+     */
+    protected function _callbackSecretKey($match)
+    {
+        return Mage_Adminhtml_Model_Url::SECRET_KEY_PARAM_NAME . '/'
+            . $this->_url->getSecretKey($match[1], $match[2]);
+    }
+
+    /**
+     * Get menu level HTML code
+     *
+     * @param  array<string, Menu> $menu
+     * @param  int                 $level
+     * @return string
+     */
+    public function getMenuLevel($menu, $level = 0)
+    {
+        $html = '<ul ' . ($level ? '' : 'id="nav"') . '>' . PHP_EOL;
+        foreach ($menu as $item) {
+            if ((empty($item['url']) || ($item['url'] == '#')) && empty($item['children'])) {
+                continue; // for example hide System/Tools when empty
+            }
+
+            $html .= '<li class="'
+                . (!$level && !empty($item['active']) ? ' active' : '') . ' '
+                . (empty($item['children']) ? '' : ' parent')
+                . (!empty($level) && !empty($item['last']) ? ' last' : '')
+                . ' level' . $level . '"> <a href="' . $item['url'] . '" '
+                . (empty($item['id']) ? '' : 'id="nav-' . $item['id'] . '"') . ' '
+                . (empty($item['title']) ? '' : 'title="' . $item['title'] . '"') . ' '
+                . (empty($item['target']) ? '' : 'target="' . $item['target'] . '"') . ' '
+                . (empty($item['click']) ? '' : 'onclick="' . $item['click'] . '"') . ' class="'
+                . (empty($item['active']) ? '' : 'active') . '"><span>'
+                . $this->escapeHtml($item['label']) . '</span></a>' . PHP_EOL;
+            if (!empty($item['children'])) {
+                $html .= $this->getMenuLevel($item['children'], $level + 1);
+            }
+
+            $html .= '</li>' . PHP_EOL;
+        }
+
+        return $html . ('</ul>' . PHP_EOL);
+    }
+
+    /**
+     * Check is module output enabled
+     *
+     * @return bool
+     */
+    protected function _isEnabledModuleOutput(Varien_Simplexml_Element $child)
+    {
+        $helperName      = 'adminhtml';
+        $childAttributes = $child->attributes();
+        if (isset($childAttributes['module'])) {
+            $helperName  = (string) $childAttributes['module'];
+        }
+
+        return Mage::helper($helperName)->isModuleOutputEnabled();
+    }
+}

@@ -1,0 +1,30 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * Template for filter items block
+ *
+ * @see Mage_Catalog_Block_Layer_Filter_Abstract
+ * @var Mage_Catalog_Block_Layer_Filter_Abstract $this
+ */
+?>
+
+<ol>
+<?php foreach ($this->getItems() as $_item): ?>
+    <li>
+        <?php if ($_item->getCount() > 0): ?>
+        <a href="<?php echo $this->escapeUrl($_item->getUrl()) ?>"><?php echo $_item->getLabel() ?></a>
+        <?php else: echo $_item->getLabel() ?>
+        <?php endif ?>
+        <?php if ($this->shouldDisplayProductCount()): ?>
+        (<?php echo $_item->getCount() ?>)
+        <?php endif ?>
+    </li>
+<?php endforeach ?>
+</ol>

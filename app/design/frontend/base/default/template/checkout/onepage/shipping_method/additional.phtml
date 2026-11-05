@@ -1,0 +1,15 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @var Mage_Checkout_Block_Onepage_Shipping_Method_Additional $this
+ */
+?>
+<?php if (!$this->getQuote()->isVirtual() && $this->helper('core')->isModuleOutputEnabled('Mage_GiftMessage')): ?>
+    <?php echo $this->helper('giftmessage/message')->getInline('onepage_checkout', $this->getQuote(), $this->getDontDisplayContainer()) ?>
+<?php endif ?>

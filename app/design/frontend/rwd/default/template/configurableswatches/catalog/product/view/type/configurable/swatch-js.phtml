@@ -1,0 +1,17 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     rwd_default
+ */
+
+/** @var Mage_Core_Block_Template $this */
+?>
+<?php if ($this->getLayout()->getBlock('head')->getItems('skin_js/js/configurableswatches/swatches-product.js')): ?>
+    <script type="text/javascript">
+        document.observe('dom:loaded', function() {
+            var swatchesConfig = new Product.ConfigurableSwatches(spConfig);
+        });
+    </script>
+<?php endif ?>

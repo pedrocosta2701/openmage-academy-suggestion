@@ -1,0 +1,30 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     rwd_default
+ */
+?>
+<?php
+    /** @var Mage_ConfigurableSwatches_Block_Catalog_Media_Js_Abstract $this */
+?>
+
+<script type="text/javascript">
+    if(!(typeof $j == 'function' && $j === jQuery)) {
+        ConfigurableMediaImages.init('<?php echo $this->getImageType(); ?>');
+        <?php foreach ($this->getProductImageFallbacks() as $imageFallback): ?>
+        ConfigurableMediaImages.setImageFallback(<?php echo $imageFallback['product']->getId(); ?>, JSON.parse('<?php echo $imageFallback['image_fallback']; ?>'));
+        <?php endforeach ?>
+        document.dispatchEvent(new Event('configurable-media-images-init'));
+    } else {
+        // compatibility with rwd theme ProductMediaManager in app.js
+        $j(document).on('product-media-loaded', function() {
+            ConfigurableMediaImages.init('<?php echo $this->getImageType(); ?>');
+            <?php foreach ($this->getProductImageFallbacks() as $imageFallback): ?>
+            ConfigurableMediaImages.setImageFallback(<?php echo $imageFallback['product']->getId(); ?>, $j.parseJSON('<?php echo $imageFallback['image_fallback']; ?>'));
+            <?php endforeach ?>
+            $j(document).trigger('configurable-media-images-init', ConfigurableMediaImages);
+        });
+    }
+</script>

@@ -1,0 +1,181 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Eav
+ */
+
+/**
+ * EAV attribute resource model (Using Forms)
+ *
+ * @package    Mage_Eav
+ */
+abstract class Mage_Eav_Model_Attribute extends Mage_Eav_Model_Entity_Attribute
+{
+    /**
+     * Name of the module
+     * Override it
+     */
+    //const MODULE_NAME = 'Mage_Eav';
+
+    /**
+     * Prefix of model events object
+     *
+     * @var string
+     */
+    protected $_eventObject = 'attribute';
+
+    /**
+     * Active Website instance
+     *
+     * @var null|Mage_Core_Model_Website
+     */
+    protected $_website;
+
+    /**
+     * Set active website instance
+     *
+     * @param  int|Mage_Core_Model_Website $website
+     * @return $this
+     */
+    public function setWebsite($website)
+    {
+        $this->_website = Mage::app()->getWebsite($website);
+        return $this;
+    }
+
+    /**
+     * Return active website instance
+     *
+     * @return Mage_Core_Model_Website
+     */
+    public function getWebsite()
+    {
+        if (is_null($this->_website)) {
+            $this->_website = Mage::app()->getWebsite();
+        }
+
+        return $this->_website;
+    }
+
+    /**
+     * Processing object after save data
+     *
+     * @inheritDoc
+     */
+    #[Override]
+    protected function _afterSave()
+    {
+        Mage::getSingleton('eav/config')->clear();
+        return parent::_afterSave();
+    }
+
+    /**
+     * Return forms in which the attribute
+     *
+     * @return array
+     */
+    public function getUsedInForms()
+    {
+        $forms = $this->getDataByKey('used_in_forms');
+        if (is_null($forms)) {
+            $forms = $this->_getResource()->getUsedInForms($this);
+            $this->setData('used_in_forms', $forms);
+        }
+
+        return $forms;
+    }
+
+    /**
+     * Return validate rules
+     *
+     * @return array
+     */
+    public function getValidateRules()
+    {
+        $rules = $this->getDataByKey('validate_rules');
+        if (is_array($rules)) {
+            return $rules;
+        }
+
+        if (is_string($rules) && $rules !== '') {
+            return Mage::helper('core/unserializeArray')->unserialize($rules);
+        }
+
+        return [];
+    }
+
+    /**
+     * Set validate rules
+     *
+     * @param  array|string $rules
+     * @return $this
+     */
+    public function setValidateRules($rules)
+    {
+        if (empty($rules)) {
+            $rules = null;
+        } elseif (is_array($rules)) {
+            $rules = serialize($rules);
+        }
+
+        $this->setData('validate_rules', $rules);
+
+        return $this;
+    }
+
+    /**
+     * Return scope value by key
+     *
+     * @param  string $key
+     * @return mixed
+     */
+    protected function _getScopeValue($key)
+    {
+        $scopeKey = sprintf('scope_%s', $key);
+        return $this->getData($scopeKey) ?? $this->getData($key);
+    }
+
+    /**
+     * Return is attribute value required
+     *
+     * @return mixed
+     */
+    public function getIsRequired()
+    {
+        return $this->_getScopeValue('is_required');
+    }
+
+    /**
+     * Return is visible attribute flag
+     *
+     * @return mixed
+     */
+    public function getIsVisible()
+    {
+        return $this->_getScopeValue('is_visible');
+    }
+
+    /**
+     * Return default value for attribute
+     *
+     * @return mixed
+     */
+    #[Override]
+    public function getDefaultValue()
+    {
+        return $this->_getScopeValue('default_value');
+    }
+
+    /**
+     * Return count of lines for multiply line attribute
+     *
+     * @return mixed
+     */
+    public function getMultilineCount()
+    {
+        return $this->_getScopeValue('multiline_count');
+    }
+}

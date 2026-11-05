@@ -1,0 +1,17 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Wishlist_Block_Customer_Wishlist_Item_Column_Image $this */
+
+/** @var Mage_Wishlist_Model_Item $item */
+$item = $this->getItem();
+$product = $item->getProduct();
+?>
+<a class="product-image" href="<?php echo $this->getProductUrl($item) ?>" title="<?php echo $this->escapeHtml($product->getName()) ?>">
+    <img src="<?php echo $this->helper('catalog/image')->init($product, 'small_image')->resize(113, 113); ?>" width="113" height="113" alt="<?php echo $this->escapeHtml($product->getName()) ?>" />
+</a>

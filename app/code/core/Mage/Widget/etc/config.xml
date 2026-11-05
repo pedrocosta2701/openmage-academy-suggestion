@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Widget
+ */
+-->
+<config>
+    <modules>
+        <Mage_Widget>
+            <version>1.6.0.1</version>
+        </Mage_Widget>
+    </modules>
+    <global>
+        <models>
+            <widget>
+                <class>Mage_Widget_Model</class>
+                <resourceModel>widget_resource</resourceModel>
+            </widget>
+            <widget_resource>
+                <class>Mage_Widget_Model_Resource</class>
+                <entities>
+                    <widget>
+                        <table>widget</table>
+                    </widget>
+                    <widget_instance>
+                        <table>widget_instance</table>
+                    </widget_instance>
+                    <widget_instance_page>
+                        <table>widget_instance_page</table>
+                    </widget_instance_page>
+                    <widget_instance_page_layout>
+                        <table>widget_instance_page_layout</table>
+                    </widget_instance_page_layout>
+                </entities>
+            </widget_resource>
+        </models>
+        <resources>
+            <widget_setup>
+                <setup>
+                    <module>Mage_Widget</module>
+                </setup>
+            </widget_setup>
+        </resources>
+        <blocks>
+            <widget>
+                <class>Mage_Widget_Block</class>
+            </widget>
+        </blocks>
+        <cms>
+            <page>
+                <tempate_filter>widget/template_filter</tempate_filter>
+            </page>
+            <block>
+                <tempate_filter>widget/template_filter</tempate_filter>
+            </block>
+        </cms>
+        <widget>
+            <related_cache_types>
+                <block_html/>
+                <layout/>
+            </related_cache_types>
+        </widget>
+    </global>
+    <adminhtml>
+        <translate>
+            <modules>
+                <Mage_Widget>
+                    <files>
+                        <default>Mage_Widget.csv</default>
+                    </files>
+                </Mage_Widget>
+            </modules>
+        </translate>
+        <layout>
+            <updates>
+                <widget>
+                    <file>widget.xml</file>
+                </widget>
+            </updates>
+        </layout>
+        <events>
+            <cms_wysiwyg_config_prepare>
+                <observers>
+                    <widget_observer>
+                        <class>widget/observer</class>
+                        <method>prepareWidgetsPluginConfig</method>
+                    </widget_observer>
+                </observers>
+            </cms_wysiwyg_config_prepare>
+        </events>
+    </adminhtml>
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <widget before="Mage_Adminhtml">Mage_Widget_Adminhtml</widget>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+</config>

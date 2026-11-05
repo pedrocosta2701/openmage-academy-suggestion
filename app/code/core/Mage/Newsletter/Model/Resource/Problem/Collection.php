@@ -1,0 +1,131 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Newsletter
+ */
+
+/**
+ * Newsletter problems collection
+ *
+ * @package    Mage_Newsletter
+ *
+ * @method $this setCustomerFirstName(string $value)
+ * @method $this setCustomerLastName(string $value)
+ * @extends Mage_Core_Model_Resource_Db_Collection_Abstract<Mage_Newsletter_Model_Problem>
+ */
+class Mage_Newsletter_Model_Resource_Problem_Collection extends Mage_Core_Model_Resource_Db_Collection_Abstract
+{
+    /**
+     * True when subscribers info joined
+     *
+     * @var bool
+     */
+    protected $_subscribersInfoJoinedFlag  = false;
+
+    /**
+     * True when grouped
+     *
+     * @var bool
+     */
+    protected $_problemGrouped             = false;
+
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init('newsletter/problem');
+    }
+
+    /**
+     * Adds subscribers info
+     *
+     * @return $this
+     */
+    public function addSubscriberInfo()
+    {
+        $this->getSelect()->joinLeft(
+            ['subscriber' => $this->getTable('newsletter/subscriber')],
+            'main_table.subscriber_id = subscriber.subscriber_id',
+            ['subscriber_email','customer_id','subscriber_status'],
+        );
+        $this->addFilterToMap('subscriber_id', 'main_table.subscriber_id');
+        $this->_subscribersInfoJoinedFlag = true;
+
+        return $this;
+    }
+
+    /**
+     * Adds queue info
+     *
+     * @return $this
+     */
+    public function addQueueInfo()
+    {
+        $this->getSelect()->joinLeft(
+            ['queue' => $this->getTable('newsletter/queue')],
+            'main_table.queue_id = queue.queue_id',
+            ['queue_start_at', 'queue_finish_at'],
+        )
+        ->joinLeft(
+            ['template' => $this->getTable('newsletter/template')],
+            'queue.template_id = template.template_id',
+            ['template_subject','template_code','template_sender_name','template_sender_email'],
+        );
+        return $this;
+    }
+
+    /**
+     * Loads customers info to collection
+     */
+    protected function _addCustomersData()
+    {
+        $customersIds = [];
+
+        foreach ($this->getItems() as $item) {
+            if ($item->getCustomerId()) {
+                $customersIds[] = $item->getCustomerId();
+            }
+        }
+
+        if (count($customersIds) == 0) {
+            return;
+        }
+
+        $customers = Mage::getResourceModel('customer/customer_collection')
+            ->addNameToSelect()
+            ->addAttributeToFilter('entity_id', ['in' => $customersIds]);
+
+        $customers->load();
+
+        foreach ($customers->getItems() as $customer) {
+            $problems = $this->getItemsByColumnValue('customer_id', $customer->getId());
+            foreach ($problems as $problem) {
+                $problem->setCustomerName($customer->getName())
+                    ->setCustomerFirstName($customer->getFirstName())
+                    ->setCustomerLastName($customer->getLastName());
+            }
+        }
+    }
+
+    /**
+     * Loads collection and adds customers info
+     *
+     * @param  bool  $printQuery
+     * @param  bool  $logQuery
+     * @return $this
+     */
+    #[Override]
+    public function load($printQuery = false, $logQuery = false)
+    {
+        parent::load($printQuery, $logQuery);
+        if ($this->_subscribersInfoJoinedFlag && !$this->isLoaded()) {
+            $this->_addCustomersData();
+        }
+
+        return $this;
+    }
+}

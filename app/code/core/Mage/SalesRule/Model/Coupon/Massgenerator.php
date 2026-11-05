@@ -1,0 +1,197 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_SalesRule
+ */
+
+/**
+ * SalesRule Mass Coupon Generator
+ *
+ * @package    Mage_SalesRule
+ *
+ * @method Mage_SalesRule_Model_Resource_Coupon            _getResource()
+ * @method Mage_SalesRule_Model_Resource_Coupon_Collection getCollection()
+ * @method string                                          getDash()
+ * @method string                                          getFormat()
+ * @method string                                          getLength()
+ * @method int                                             getMaxAttempts()
+ * @method int                                             getMaxProbability()
+ * @method string                                          getPrefix()
+ * @method int                                             getQty()
+ * @method Mage_SalesRule_Model_Resource_Coupon            getResource()
+ * @method Mage_SalesRule_Model_Resource_Coupon_Collection getResourceCollection()
+ * @method int                                             getRuleId()
+ * @method string                                          getSuffix()
+ * @method string                                          getToDate()
+ * @method int                                             getUsesPerCoupon()
+ * @method int                                             getUsesPerCustomer()
+ * @method $this                                           setLength(int $value)
+ */
+class Mage_SalesRule_Model_Coupon_Massgenerator extends Mage_Core_Model_Abstract implements Mage_SalesRule_Model_Coupon_CodegeneratorInterface
+{
+    /**
+     * Maximum probability of guessing the coupon on the first attempt
+     */
+    public const MAX_PROBABILITY_OF_GUESSING = 0.25;
+
+    public const MAX_GENERATE_ATTEMPTS = 10;
+
+    /**
+     * Count of generated Coupons
+     * @var int
+     */
+    protected $_generatedCount = 0;
+
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init('salesrule/coupon');
+    }
+
+    /**
+     * Generate coupon code
+     *
+     * @return string
+     * @throws Exception
+     */
+    public function generateCode()
+    {
+        $format  = $this->getFormat();
+        if (!$format) {
+            $format = Mage_SalesRule_Helper_Coupon::COUPON_FORMAT_ALPHANUMERIC;
+        }
+
+        $length  = max(1, (int) $this->getLength());
+        $split   = max(0, (int) $this->getDash());
+        $suffix  = $this->getSuffix();
+        $prefix  = $this->getPrefix();
+
+        $splitChar = $this->getDelimiter();
+        $charset = Mage::helper('salesrule/coupon')->getCharset($format);
+
+        $code = '';
+        $charsetSize = count($charset);
+        for ($index = 0; $index < $length; $index++) {
+            $char = $charset[random_int(0, $charsetSize - 1)];
+            if ($split > 0 && ($index % $split) == 0 && $index != 0) {
+                $char = $splitChar . $char;
+            }
+
+            $code .= $char;
+        }
+
+        return $prefix . $code . $suffix;
+    }
+
+    /**
+     * Retrieve delimiter
+     *
+     * @return string
+     */
+    public function getDelimiter()
+    {
+        if ($this->getDataByKey('delimiter')) {
+            return $this->getDataByKey('delimiter');
+        }
+
+        return Mage::helper('salesrule/coupon')->getCodeSeparator();
+    }
+
+    /**
+     * Generate Coupons Pool
+     *
+     * @return $this
+     * @throws Exception
+     * @throws Mage_Core_Exception
+     */
+    public function generatePool()
+    {
+        $this->_generatedCount = 0;
+        $size = $this->getQty();
+
+        $maxProbability = $this->getMaxProbability() ? $this->getMaxProbability() : self::MAX_PROBABILITY_OF_GUESSING;
+        $maxAttempts = $this->getMaxAttempts() ? $this->getMaxAttempts() : self::MAX_GENERATE_ATTEMPTS;
+
+        /** @var Mage_SalesRule_Model_Coupon $coupon */
+        $coupon = Mage::getModel('salesrule/coupon');
+
+        $chars = count(Mage::helper('salesrule/coupon')->getCharset($this->getFormat()));
+        $length = (int) $this->getLength();
+        $maxCodes = $chars ** $length;
+        $probability = $size / $maxCodes;
+        //increase the length of Code if probability is low
+        if ($probability > $maxProbability) {
+            do {
+                $length++;
+                $maxCodes = $chars ** $length;
+                $probability = $size / $maxCodes;
+            } while ($probability > $maxProbability);
+
+            $this->setLength($length);
+        }
+
+        $now = $this->getResource()->formatDate(
+            Mage::getSingleton('core/date')->gmtTimestamp(),
+        );
+
+        for ($index = 0; $index < $size; $index++) {
+            $attempt = 0;
+            do {
+                if ($attempt >= $maxAttempts) {
+                    Mage::throwException(Mage::helper('salesrule')->__('Unable to create requested Coupon Qty. Please check settings and try again.'));
+                }
+
+                $code = $this->generateCode();
+                $attempt++;
+            } while ($this->getResource()->exists($code));
+
+            $expirationDate = $this->getToDate();
+            if ($expirationDate instanceof Zend_Date) {
+                $expirationDate = $expirationDate->toString(Varien_Date::DATETIME_INTERNAL_FORMAT);
+            }
+
+            $coupon->setId(null)
+                ->setRuleId($this->getRuleId())
+                ->setUsageLimit($this->getUsesPerCoupon())
+                ->setUsagePerCustomer($this->getUsesPerCustomer())
+                ->setExpirationDate($expirationDate)
+                ->setCreatedAt($now)
+                ->setType(Mage_SalesRule_Helper_Coupon::COUPON_TYPE_SPECIFIC_AUTOGENERATED)
+                ->setCode($code)
+                ->save();
+
+            $this->_generatedCount++;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Validate input
+     *
+     * @param  array $data
+     * @return bool
+     */
+    public function validateData($data)
+    {
+        return !empty($data) && !empty($data['qty']) && !empty($data['rule_id'])
+            && !empty($data['length']) && !empty($data['format'])
+            && (int) $data['qty'] > 0 && (int) $data['rule_id'] > 0
+            && (int) $data['length'] > 0;
+    }
+
+    /**
+     * Retrieve count of generated Coupons
+     *
+     * @return int
+     */
+    public function getGeneratedCount()
+    {
+        return $this->_generatedCount;
+    }
+}

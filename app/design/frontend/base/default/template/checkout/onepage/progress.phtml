@@ -1,0 +1,43 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Checkout_Block_Onepage_Progress $this */
+?>
+<div class="block block-progress opc-block-progress">
+    <div class="block-title">
+        <strong><span><?php echo $this->__('Your Checkout Progress') ?></span></strong>
+    </div>
+    <div class="block-content">
+        <dl>
+            <?php if ($this->getCheckout()->getStepData('billing', 'is_show')): ?>
+            <div id="billing-progress-opcheckout">
+                <?php echo $this->getChildHtml('billing.progress') ?>
+            </div>
+            <?php endif ?>
+
+            <?php if ($this->getCheckout()->getStepData('shipping', 'is_show')): ?>
+            <div id="shipping-progress-opcheckout">
+                <?php echo $this->getChildHtml('shipping.progress') ?>
+            </div>
+            <?php endif ?>
+
+            <?php if ($this->getCheckout()->getStepData('shipping_method', 'is_show')): ?>
+            <div id="shipping_method-progress-opcheckout">
+                <?php echo $this->getChildHtml('shippingmethod.progress') ?>
+            </div>
+            <?php endif ?>
+
+            <?php if ($this->getCheckout()->getStepData('payment', 'is_show')): ?>
+            <div id="payment-progress-opcheckout">
+                <?php echo $this->getChildHtml('payment.progress') ?>
+            </div>
+            <?php endif ?>
+        </dl>
+    </div>
+</div>
+

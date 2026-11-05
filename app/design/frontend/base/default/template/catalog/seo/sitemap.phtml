@@ -1,0 +1,33 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * @see Mage_Catalog_Block_Seo_Sitemap_Product
+ * @var Mage_Catalog_Block_Seo_Sitemap_Product $this
+ */
+?>
+<?php $_items = $this->getCollection(); ?>
+<?php if($_items->getSize()): ?>
+    <ul class="sitemap">
+        <?php foreach ($_items as $_item): ?>
+            <li><a href="<?php echo $this->getItemUrl($_item) ?>"><?php echo $this->escapeHtml($_item->name) ?></a></li>
+        <?php endforeach ?>
+    </ul>
+<?php else: ?>
+    <p class="note-msg">
+        <?php echo $this->__('There are no %s available.', $this->getItemsTitle()); ?>
+    </p>
+    <script type="text/javascript">
+    //<![CDATA[
+        if ($('sitemap_top_links') != undefined) {
+            $('sitemap_top_links').hide();
+        }
+    //]]>
+    </script>
+<?php endif ?>

@@ -1,0 +1,129 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_SalesRule
+ */
+
+/**
+ * SalesRule Resource Coupon
+ *
+ * @package    Mage_SalesRule
+ */
+class Mage_SalesRule_Model_Resource_Coupon extends Mage_Core_Model_Resource_Db_Abstract
+{
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init('salesrule/coupon', 'coupon_id');
+        $this->addUniqueField([
+            'field' => 'code',
+            'title' => Mage::helper('salesrule')->__('Coupon with the same code'),
+        ]);
+    }
+
+    /**
+     * Perform actions before object save
+     *
+     * @return Mage_Core_Model_Resource_Db_Abstract
+     */
+    #[Override]
+    protected function _beforeSave(Mage_Core_Model_Abstract $object)
+    {
+        if (!$object->getExpirationDate()) {
+            $object->setExpirationDate(null);
+        } elseif ($object->getExpirationDate() instanceof Zend_Date) {
+            $object->setExpirationDate($object->getExpirationDate()->toString(Varien_Date::DATETIME_INTERNAL_FORMAT));
+        }
+
+        // maintain single primary coupon per rule
+        $object->setIsPrimary($object->getIsPrimary() ? 1 : null);
+
+        return parent::_beforeSave($object);
+    }
+
+    /**
+     * Load primary coupon (is_primary = 1) for specified rule
+     *
+     * @param  int|Mage_SalesRule_Model_Rule $rule
+     * @return bool
+     */
+    public function loadPrimaryByRule(Mage_SalesRule_Model_Coupon $object, $rule)
+    {
+        $read = $this->_getReadAdapter();
+
+        $ruleId = $rule instanceof Mage_SalesRule_Model_Rule ? $rule->getId() : (int) $rule;
+
+        $select = $read->select()->from($this->getMainTable())
+            ->where('rule_id = :rule_id')
+            ->where('is_primary = :is_primary');
+
+        $data = $read->fetchRow($select, [':rule_id' => $ruleId, ':is_primary' => 1]);
+
+        if (!$data) {
+            return false;
+        }
+
+        $object->setData($data);
+
+        $this->_afterLoad($object);
+        return true;
+    }
+
+    /**
+     * Check if code exists
+     *
+     * @param  string $code
+     * @return bool
+     */
+    public function exists($code)
+    {
+        $read = $this->_getReadAdapter();
+        $select = $read->select();
+        $select->from($this->getMainTable(), 'code');
+        $select->where('code = :code');
+        return $read->fetchOne($select, ['code' => $code]) !== false;
+    }
+
+    /**
+     * Update auto generated Specific Coupon if it's rule changed
+     *
+     * @return $this
+     */
+    public function updateSpecificCoupons(Mage_SalesRule_Model_Rule $rule)
+    {
+        if (!$rule || !$rule->getId() || !$rule->hasDataChanges()) {
+            return $this;
+        }
+
+        $updateArray = [];
+        if ($rule->dataHasChangedFor('uses_per_coupon')) {
+            $updateArray['usage_limit'] = $rule->getUsesPerCoupon();
+        }
+
+        if ($rule->dataHasChangedFor('uses_per_customer')) {
+            $updateArray['usage_per_customer'] = $rule->getUsesPerCustomer();
+        }
+
+        $ruleNewDate = new Zend_Date($rule->getToDate());
+        $ruleOldDate = new Zend_Date($rule->getOrigData('to_date'));
+
+        if ($ruleNewDate->compare($ruleOldDate)) {
+            $updateArray['expiration_date'] = $rule->getToDate();
+        }
+
+        if (!empty($updateArray)) {
+            $this->_getWriteAdapter()->update(
+                $this->getTable('salesrule/coupon'),
+                $updateArray,
+                ['rule_id = ?' => $rule->getId()],
+            );
+        }
+
+        return $this;
+    }
+}

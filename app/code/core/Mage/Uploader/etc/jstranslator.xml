@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Uploader
+ */
+-->
+<jstranslator>
+    <uploader-exceed_max-1 translate="message" module="uploader">
+        <message>Maximum allowed file size for upload is</message>
+    </uploader-exceed_max-1>
+    <uploader-exceed_max-2 translate="message" module="uploader">
+        <message>Please check your server PHP settings.</message>
+    </uploader-exceed_max-2>
+    <uploader-tab-change-event-confirm translate="message" module="uploader">
+        <message>There are files that were selected but not uploaded yet. After switching to another tab your selections will be lost. Do you wish to continue ?</message>
+    </uploader-tab-change-event-confirm>
+    <uploader-complete-event-text translate="message" module="uploader">
+        <message>Complete</message>
+    </uploader-complete-event-text>
+    <uploader-uploading-progress translate="message" module="uploader">
+        <message>Uploading...</message>
+    </uploader-uploading-progress>
+</jstranslator>
+

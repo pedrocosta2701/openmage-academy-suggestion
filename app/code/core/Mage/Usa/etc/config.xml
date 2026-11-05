@@ -1,0 +1,299 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Usa
+ */
+-->
+<config>
+    <modules>
+        <Mage_Usa>
+            <version>1.6.0.3</version>
+        </Mage_Usa>
+    </modules>
+    <global>
+        <resources>
+            <usa_setup>
+                <setup>
+                    <module>Mage_Usa</module>
+                </setup>
+            </usa_setup>
+        </resources>
+        <models>
+            <usa>
+                <class>Mage_Usa_Model</class>
+            </usa>
+        </models>
+        <blocks>
+            <usa>
+                <class>Mage_Usa_Block</class>
+            </usa>
+        </blocks>
+        <helpers>
+            <usa>
+                <class>Mage_Usa_Helper</class>
+            </usa>
+        </helpers>
+        <sales>
+            <shipping>
+                <carriers>
+                    <ups>
+                        <class>Mage_Usa_Model_Shipping_Carrier_Ups</class>
+                    </ups>
+                    <usps>
+                        <class>Mage_Usa_Model_Shipping_Carrier_Usps</class>
+                    </usps>
+                    <fedex>
+                        <class>Mage_Usa_Model_Shipping_Carrier_Fedex</class>
+                    </fedex>
+                    <dhl>
+                        <class>Mage_Usa_Model_Shipping_Carrier_Dhl</class>
+                    </dhl>
+                    <dhlint>
+                        <class>Mage_Usa_Model_Shipping_Carrier_Dhl_International</class>
+                    </dhlint>
+                </carriers>
+            </shipping>
+            <tax>
+                <methods>
+                    <uszipcode>
+                        <class>Mage_Usa_Model_Tax_Uszipcode</class>
+                    </uszipcode>
+                </methods>
+            </tax>
+        </sales>
+        <events>
+            <sales_order_place_before>
+                <observers>
+                    <usa_validate_address>
+                        <class>usa/observer_validateOrderAddress</class>
+                    </usa_validate_address>
+                </observers>
+            </sales_order_place_before>
+            <sales_order_shipment_save_before>
+                <observers>
+                    <usa_prepare_shipment>
+                        <class>usa/observer_prepareShipmentForLabels</class>
+                    </usa_prepare_shipment>
+                </observers>
+            </sales_order_shipment_save_before>
+            <checkout_controller_onepage_save_shipping_address>
+                <observers>
+                    <usa_log_address_verification>
+                        <class>usa/observer_logAddressVerification</class>
+                    </usa_log_address_verification>
+                </observers>
+            </checkout_controller_onepage_save_shipping_address>
+        </events>
+    </global>
+    <adminhtml>
+        <translate>
+            <modules>
+                <Mage_Usa>
+                    <files>
+                        <default>Mage_Usa.csv</default>
+                    </files>
+                </Mage_Usa>
+            </modules>
+        </translate>
+    </adminhtml>
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <usa before="Mage_Adminhtml">Mage_Usa_Adminhtml</usa>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+    <frontend>
+        <routers>
+            <usa>
+                <use>standard</use>
+                <args>
+                    <module>Mage_Usa</module>
+                    <frontName>usa</frontName>
+                </args>
+            </usa>
+        </routers>
+        <translate>
+            <modules>
+                <Mage_Usa>
+                    <files>
+                        <default>Mage_Usa.csv</default>
+                    </files>
+                </Mage_Usa>
+            </modules>
+        </translate>
+        <layout>
+            <updates>
+                <usa>
+                    <file>usa.xml</file>
+                </usa>
+            </updates>
+        </layout>
+    </frontend>
+    <default>
+        <system>
+            <media_storage_configuration>
+                <allowed_resources>
+                    <dhl_folder>dhl</dhl_folder>
+                </allowed_resources>
+            </media_storage_configuration>
+        </system>
+        <carriers>
+            <dhl>
+                <account/>
+                <active>0</active>
+                <sallowspecific>0</sallowspecific>
+                <allowed_methods>IE,E SAT,E 10:30AM,E,N,S,G</allowed_methods>
+                <contentdesc>Big Box</contentdesc>
+                <cutoff_cost/>
+                <dutypaymenttype>R</dutypaymenttype>
+                <free_method>G</free_method>
+                <gateway_url>https://eCommerce.airborne.com/ApiLandingTest.asp</gateway_url>
+                <verify_peer>0</verify_peer>
+                <id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <model>usa/shipping_carrier_dhl</model>
+                <password backend_model="adminhtml/system_config_backend_encrypted"/>
+                <shipment_requesttype>0</shipment_requesttype>
+                <shipment_type>P</shipment_type>
+                <shipping_key backend_model="adminhtml/system_config_backend_encrypted"/>
+                <shipping_intlkey backend_model="adminhtml/system_config_backend_encrypted"/>
+                <title>DHL (Deprecated)</title>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <unit_of_measure>LB</unit_of_measure>
+                <max_package_weight>150</max_package_weight>
+                <handling_type>F</handling_type>
+                <handling_action>O</handling_action>
+                <shipment_days>Mon,Tue,Wed,Thu,Fri,Sat</shipment_days>
+                <intl_shipment_days>Mon,Tue,Wed,Thu,Fri</intl_shipment_days>
+                <additional_protection_rounding>0</additional_protection_rounding>
+            </dhl>
+            <fedex>
+                <account backend_model="adminhtml/system_config_backend_encrypted"/>
+                <client_id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <client_secret backend_model="adminhtml/system_config_backend_encrypted"/>
+                <tracking_client_id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <tracking_client_secret backend_model="adminhtml/system_config_backend_encrypted"/>
+                <sandbox_mode>0</sandbox_mode>
+                <shipment_requesttype>0</shipment_requesttype>
+                <active>0</active>
+                <sallowspecific>0</sallowspecific>
+                <allowed_methods>FEDEX_1_DAY_FREIGHT,FEDEX_2_DAY_FREIGHT,FEDEX_2_DAY,FEDEX_2_DAY_AM,FEDEX_3_DAY_FREIGHT,FEDEX_EXPRESS_SAVER,FEDEX_GROUND,FIRST_OVERNIGHT,GROUND_HOME_DELIVERY,INTERNATIONAL_ECONOMY,INTERNATIONAL_ECONOMY_FREIGHT,INTERNATIONAL_FIRST,FEDEX_INTERNATIONAL_PRIORITY,INTERNATIONAL_PRIORITY_FREIGHT,PRIORITY_OVERNIGHT,SMART_POST,STANDARD_OVERNIGHT</allowed_methods>
+                <cutoff_cost/>
+                <dropoff>REGULAR_PICKUP</dropoff>
+                <free_method>FEDEX_GROUND</free_method>
+                <handling>0</handling>
+                <model>usa/shipping_carrier_fedex</model>
+                <packaging>YOUR_PACKAGING</packaging>
+                <title>Federal Express</title>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <max_package_weight>150</max_package_weight>
+                <handling_type>F</handling_type>
+                <handling_action>O</handling_action>
+            </fedex>
+            <ups>
+                <access_license_number backend_model="adminhtml/system_config_backend_encrypted"/>
+                <active>0</active>
+                <sallowspecific>0</sallowspecific>
+                <allowed_methods>1DM,1DML,1DA,1DAL,1DAPI,1DP,1DPL,2DM,2DML,2DA,2DAL,3DS,GND,GNDCOM,GNDRES,STD,XPR,WXS,XPRL,XDM,XDML,XPD,01,02,03,07,08,11,12,14,54,59,65</allowed_methods>
+                <origin_shipment>Shipments Originating in United States</origin_shipment>
+                <shipment_requesttype>0</shipment_requesttype>
+                <container>CP</container>
+                <cutoff_cost/>
+                <dest_type>RES</dest_type>
+                <free_method>GND</free_method>
+                <gateway_xml_url>https://onlinetools.ups.com/ups.app/xml/Rate</gateway_xml_url>
+                <gateway_rest_url>https://onlinetools.ups.com/api/rating/</gateway_rest_url>
+                <tracking_xml_url>https://onlinetools.ups.com/ups.app/xml/Track</tracking_xml_url>
+                <tracking_rest_url>https://onlinetools.ups.com/api/track/</tracking_rest_url>
+                <shipconfirm_xml_url>https://onlinetools.ups.com/ups.app/xml/ShipConfirm</shipconfirm_xml_url>
+                <shipconfirm_rest_url>https://onlinetools.ups.com/api/shipments/v2403/ship</shipconfirm_rest_url>
+                <shipaccept_xml_url>https://onlinetools.ups.com/ups.app/xml/ShipAccept</shipaccept_xml_url>
+                <verify_peer>0</verify_peer>
+                <handling>0</handling>
+                <model>usa/shipping_carrier_ups</model>
+                <pickup>CC</pickup>
+                <title>United Parcel Service</title>
+                <unit_of_measure>LBS</unit_of_measure>
+                <username backend_model="adminhtml/system_config_backend_encrypted"/>
+                <password backend_model="adminhtml/system_config_backend_encrypted"/>
+                <client_id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <client_secret backend_model="adminhtml/system_config_backend_encrypted"/>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <min_package_weight>0.1</min_package_weight>
+                <max_package_weight>150</max_package_weight>
+                <handling_type>F</handling_type>
+                <handling_action>O</handling_action>
+                <negotiated_active>0</negotiated_active>
+                <mode_xml>1</mode_xml>
+                <type>UPS</type>
+            </ups>
+            <usps>
+                <active>0</active>
+                <sallowspecific>0</sallowspecific>
+                <allowed_methods>USPS_GROUND_ADVANTAGE_SP,PRIORITY_MAIL_SP,PRIORITY_MAIL_FE,PRIORITY_MAIL_FB,PRIORITY_MAIL_PL,PRIORITY_MAIL_FS,PRIORITY_MAIL_FP,PRIORITY_MAIL_FA,PRIORITY_MAIL_EXPRESS_SP,PRIORITY_MAIL_EXPRESS_FE,PRIORITY_MAIL_EXPRESS_FA,FIRST_CLASS_PACKAGE_INTERNATIONAL_SERVICE_SP,PRIORITY_MAIL_INTERNATIONAL_SP,PRIORITY_MAIL_INTERNATIONAL_FE,PRIORITY_MAIL_INTERNATIONAL_FS,PRIORITY_MAIL_INTERNATIONAL_FB,PRIORITY_MAIL_INTERNATIONAL_PL,PRIORITY_MAIL_EXPRESS_INTERNATIONAL_PA,PRIORITY_MAIL_EXPRESS_INTERNATIONAL_E4,PRIORITY_MAIL_EXPRESS_INTERNATIONAL_E6</allowed_methods>
+                <container>VARIABLE</container>
+                <cutoff_cost/>
+                <free_method/>
+                <environment>production</environment>
+                <gateway_url>https://apis.usps.com/</gateway_url>
+                <handling/>
+                <machinable>true</machinable>
+                <girth/>
+                <length/>
+                <width/>
+                <height/>
+                <methods></methods>
+                <model>usa/shipping_carrier_usps</model>
+                <size>REGULAR</size>
+                <title>United States Postal Service</title>
+                <client_id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <client_secret backend_model="adminhtml/system_config_backend_encrypted"/>
+                <enable_labels>0</enable_labels>
+                <verify_addresses>0</verify_addresses>
+                <show_delivery_estimates>0</show_delivery_estimates>
+                <cache_ttl>3600</cache_ttl>
+                <crid></crid>
+                <mid></mid>
+                <mmid></mmid>
+                <eps_account_number backend_model="adminhtml/system_config_backend_encrypted"/>
+                <permit_zip></permit_zip>
+                <account_type>EPS</account_type>
+                <price_type>EPS</price_type>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <max_package_weight>70</max_package_weight>
+                <handling_type>F</handling_type>
+                <handling_action>O</handling_action>
+            </usps>
+            <dhlint>
+                <model>usa/shipping_carrier_dhl_international</model>
+                <account/>
+                <active>0</active>
+                <title>DHL</title>
+                <sallowspecific>0</sallowspecific>
+                <content_type>D</content_type>
+                <nondoc_methods>1,3,4,8,P,Q,E,F,H,J,M,V,Y</nondoc_methods>
+                <doc_methods>2,5,6,7,9,B,C,D,U,K,L,G,W,I,N,O,R,S,T,X</doc_methods>
+                <free_method>G</free_method>
+                <gateway_url>https://xmlpi-ea.dhl.com/XMLShippingServlet</gateway_url>
+                <verify_peer>0</verify_peer>
+                <id backend_model="adminhtml/system_config_backend_encrypted"/>
+                <password backend_model="adminhtml/system_config_backend_encrypted"/>
+                <shipment_type>N</shipment_type>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+                <divide_order_weight>1</divide_order_weight>
+                <unit_of_measure>K</unit_of_measure>
+                <size>R</size>
+                <handling_type>F</handling_type>
+                <handling_action>O</handling_action>
+                <shipment_days>Mon,Tue,Wed,Thu,Fri</shipment_days>
+            </dhlint>
+        </carriers>
+    </default>
+</config>

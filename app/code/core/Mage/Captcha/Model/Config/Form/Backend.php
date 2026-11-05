@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Captcha
+ */
+
+/**
+ * Captcha image model
+ *
+ * @package    Mage_Captcha
+ */
+class Mage_Captcha_Model_Config_Form_Backend extends Mage_Captcha_Model_Config_Form_Abstract
+{
+    /**
+     * @var string
+     */
+    protected $_configPath = 'default/captcha/backend/areas';
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_GoogleCheckout
+ */
+-->
+<config>
+    <modules>
+        <Mage_GoogleCheckout>
+            <version>1.6.0.1</version>
+        </Mage_GoogleCheckout>
+    </modules>
+    <global>
+        <models>
+            <googlecheckout>
+                <class>Mage_GoogleCheckout_Model</class>
+            </googlecheckout>
+        </models>
+    </global>
+    <default>
+        <payment>
+            <googlecheckout>
+                <active>1</active>
+                <title>Google Checkout</title>
+                <model>googlecheckout/payment</model>
+            </googlecheckout>
+        </payment>
+    </default>
+</config>

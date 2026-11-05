@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Sales
+ */
+
+/**
+ * Sales orders controller
+ *
+ * @package    Mage_Sales
+ */
+class Mage_Sales_OrderController extends Mage_Sales_Controller_Abstract
+{
+    /**
+     * Action predispatch
+     *
+     * Check customer authentication for some actions
+     */
+    #[Override]
+    public function preDispatch()
+    {
+        parent::preDispatch();
+        $loginUrl = Mage::helper('customer')->getLoginUrl();
+
+        if (!Mage::getSingleton('customer/session')->authenticate($this, $loginUrl)) {
+            $this->setFlag('', self::FLAG_NO_DISPATCH, true);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Customer order history
+     * @return void
+     */
+    public function historyAction()
+    {
+        $this->loadLayout();
+        $this->_initLayoutMessages('catalog/session');
+
+        $this->getLayout()->getBlock('head')->setTitle($this->__('My Orders'));
+
+        if ($block = $this->getLayout()->getBlock('customer.account.link.back')) {
+            $block->setRefererUrl($this->_getRefererUrl());
+        }
+
+        $this->renderLayout();
+    }
+
+    /**
+     * Check osCommerce order view availability
+     *
+     * @param  array $order
+     * @return bool
+     * @deprecated after 1.6.0.0
+     */
+    protected function _canViewOscommerceOrder($order)
+    {
+        return false;
+    }
+
+    /**
+     * osCommerce Order view page
+     *
+     * @return void
+     * @deprecated after 1.6.0.0
+     */
+    public function viewOldAction()
+    {
+        $this->_forward('noRoute');
+    }
+}

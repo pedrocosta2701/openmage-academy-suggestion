@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Sales
+ */
+-->
+<widgets>
+    <sales_widget_guestfrom type="sales/widget_guest_form" translate="name description" module="sales">
+        <name>Orders and Returns</name>
+        <description>Orders and Returns Search Form</description>
+        <is_email_compatible>1</is_email_compatible>
+        <parameters>
+            <title translate="label">
+                <visible>0</visible>
+                <label>Anchor Custom Title</label>
+                <type>text</type>
+            </title>
+            <template>
+                <required>1</required>
+                <visible>1</visible>
+                <label>Template</label>
+                <type>select</type>
+                <value>sales/widget/guest/form.phtml</value>
+                <values>
+                    <default_template translate="label">
+                        <label>Default Template</label>
+                        <value>sales/widget/guest/form.phtml</value>
+                    </default_template>
+                </values>
+            </template>
+        </parameters>
+        <supported_blocks>
+            <left_column>
+                <block_name>left</block_name>
+                <template>
+                    <default>default_template</default>
+                </template>
+            </left_column>
+            <right_column>
+                <block_name>right</block_name>
+                <template>
+                    <default>default_template</default>
+                </template>
+            </right_column>
+        </supported_blocks>
+    </sales_widget_guestfrom>
+</widgets>

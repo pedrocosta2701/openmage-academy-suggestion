@@ -1,0 +1,1 @@
+Please visit the [official documentation](https://docs.openmage.org/developers/tools/oneline/) for more information.

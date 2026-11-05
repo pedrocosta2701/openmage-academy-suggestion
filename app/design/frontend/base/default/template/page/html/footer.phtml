@@ -1,0 +1,20 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * @var Mage_Page_Block_Html_Footer $this
+ */
+?>
+<div class="footer-container">
+    <div class="footer">
+        <?php echo $this->getChildHtml() ?>
+        <p class="bugs"><?php echo $this->__('Help Us to Keep OpenMage Healthy') ?> - <a href="https://github.com/OpenMage/magento-lts/issues" onclick="this.target='_blank'"><strong><?php echo $this->__('Report All Bugs') ?></strong></a> <?php echo $this->__('(ver. %s)', Mage::getOpenMageVersion()) ?></p>
+        <address><?php echo $this->getCopyright() ?></address>
+    </div>
+</div>

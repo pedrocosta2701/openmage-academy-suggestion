@@ -1,0 +1,20 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_Catalog_Block_Product_View
+ * @var Mage_Catalog_Block_Product_View $this
+ */
+?>
+<div class="product-options" id="product-options-wrapper">
+    <?php echo $this->getChildHtml('', true, true);?>
+    <?php if ($this->hasRequiredOptions()):?>
+        <p class="required"><?php echo $this->__('* Required Fields') ?></p>
+    <?php endif ?>
+</div>
+<script type="text/javascript">decorateGeneric($$('#product-options-wrapper dl'), ['last']);</script>

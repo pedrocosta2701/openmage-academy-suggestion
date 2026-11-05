@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Model_System_Config_Source_Nooptreq
+{
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function toOptionArray()
+    {
+        return [
+            ['value' => '', 'label' => Mage::helper('adminhtml')->__('No')],
+            ['value' => 'opt', 'label' => Mage::helper('adminhtml')->__('Optional')],
+            ['value' => 'req', 'label' => Mage::helper('adminhtml')->__('Required')],
+        ];
+    }
+}

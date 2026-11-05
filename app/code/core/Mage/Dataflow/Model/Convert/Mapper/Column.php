@@ -1,0 +1,140 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Dataflow
+ */
+
+/**
+ * Convert column mapper
+ *
+ * @package    Mage_Dataflow
+ */
+class Mage_Dataflow_Model_Convert_Mapper_Column extends Mage_Dataflow_Model_Convert_Mapper_Abstract
+{
+    /**
+     * Dataflow batch model
+     *
+     * @var null|Mage_Dataflow_Model_Batch
+     */
+    protected $_batch;
+
+    /**
+     * Dataflow batch export model
+     *
+     * @var null|false|Mage_Dataflow_Model_Batch_Export|string
+     */
+    protected $_batchExport;
+
+    /**
+     * Dataflow batch import model
+     *
+     * @var null|false|Mage_Dataflow_Model_Batch_Import|string
+     */
+    protected $_batchImport;
+
+    /**
+     * Retrieve Batch model singleton
+     *
+     * @return Mage_Dataflow_Model_Batch
+     */
+    public function getBatchModel()
+    {
+        if (is_null($this->_batch)) {
+            $this->_batch = Mage::getSingleton('dataflow/batch');
+        }
+
+        return $this->_batch;
+    }
+
+    /**
+     * Retrieve Batch export model
+     *
+     * @return Mage_Dataflow_Model_Batch_Export
+     * @throws Varien_Exception
+     */
+    public function getBatchExportModel()
+    {
+        if (is_null($this->_batchExport)) {
+            $object = Mage::getModel('dataflow/batch_export');
+            $this->_batchExport = Varien_Object_Cache::singleton()->save($object);
+        }
+
+        /** @var Mage_Dataflow_Model_Batch_Export $cache */
+        $cache = Varien_Object_Cache::singleton()->load($this->_batchExport);
+        return $cache;
+    }
+
+    /**
+     * Retrieve Batch import model
+     *
+     * @return Mage_Dataflow_Model_Batch_Import
+     * @throws Varien_Exception
+     */
+    public function getBatchImportModel()
+    {
+        if (is_null($this->_batchImport)) {
+            $object = Mage::getModel('dataflow/batch_import');
+            $this->_batchImport = Varien_Object_Cache::singleton()->save($object);
+        }
+
+        /** @var Mage_Dataflow_Model_Batch_Import $cache */
+        $cache = Varien_Object_Cache::singleton()->load($this->_batchImport);
+        return $cache;
+    }
+
+    /**
+     * @throws Mage_Core_Exception
+     * @throws Throwable
+     * @throws Varien_Exception
+     */
+    public function map()
+    {
+        $batchModel  = $this->getBatchModel();
+        $batchExport = $this->getBatchExportModel();
+
+        $batchExportIds = $batchExport
+            ->setBatchId($this->getBatchModel()->getId())
+            ->getIdCollection();
+
+        $onlySpecified = (bool) $this->getVar('_only_specified');
+
+        if (!$onlySpecified) {
+            foreach ($batchExportIds as $batchExportId) {
+                $batchExport->load($batchExportId);
+                $batchModel->parseFieldList($batchExport->getBatchData());
+            }
+
+            return $this;
+        }
+
+        $attributesToSelect = $this->getVar('map') && is_array($this->getVar('map')) ? $this->getVar('map') : [];
+
+        if (!$attributesToSelect) {
+            $this->getBatchExportModel()
+                ->setBatchId($this->getBatchModel()->getId())
+                ->deleteCollection();
+
+            throw new Exception(Mage::helper('dataflow')->__('Error in field mapping: field list for mapping is not defined.'));
+        }
+
+        foreach ($batchExportIds as $batchExportId) {
+            $batchExport = $this->getBatchExportModel()->load($batchExportId);
+            $row = $batchExport->getBatchData();
+
+            $newRow = [];
+            foreach ($attributesToSelect as $field => $mapField) {
+                $newRow[$mapField] = $row[$field] ?? null;
+            }
+
+            $batchExport->setBatchData($newRow)
+                ->setStatus(2)
+                ->save();
+            $this->getBatchModel()->parseFieldList($batchExport->getBatchData());
+        }
+
+        return $this;
+    }
+}

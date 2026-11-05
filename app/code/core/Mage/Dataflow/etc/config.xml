@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Dataflow
+ */
+-->
+<config>
+    <modules>
+        <Mage_Dataflow>
+            <version>1.6.0.0</version>
+        </Mage_Dataflow>
+    </modules>
+    <global>
+        <models>
+            <dataflow>
+                <class>Mage_Dataflow_Model</class>
+                <resourceModel>dataflow_resource</resourceModel>
+            </dataflow>
+            <dataflow_resource>
+                <class>Mage_Dataflow_Model_Resource</class>
+                <entities>
+                    <session>
+                        <table>dataflow_session</table>
+                    </session>
+                    <import>
+                        <table>dataflow_import_data</table>
+                    </import>
+                    <profile>
+                        <table>dataflow_profile</table>
+                    </profile>
+                    <profile_history>
+                        <table>dataflow_profile_history</table>
+                    </profile_history>
+                    <batch>
+                        <table>dataflow_batch</table>
+                    </batch>
+                    <batch_export>
+                        <table>dataflow_batch_export</table>
+                    </batch_export>
+                    <batch_import>
+                        <table>dataflow_batch_import</table>
+                    </batch_import>
+                </entities>
+            </dataflow_resource>
+        </models>
+        <resources>
+            <dataflow_setup>
+                <setup>
+                    <module>Mage_Dataflow</module>
+                </setup>
+            </dataflow_setup>
+        </resources>
+    </global>
+    <adminhtml>
+        <layout>
+            <updates>
+                <dataflow>
+                    <file>dataflow.xml</file>
+                </dataflow>
+            </updates>
+        </layout>
+    </adminhtml>
+</config>

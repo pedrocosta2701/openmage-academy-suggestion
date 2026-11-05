@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Usa
+ */
+
+$codes = [
+    'method' => [
+        'EUROPEFIRSTINTERNATIONALPRIORITY'  => 'EUROPE_FIRST_INTERNATIONAL_PRIORITY',
+        'FEDEX1DAYFREIGHT'                  => 'FEDEX_1_DAY_FREIGHT',
+        'FEDEX2DAYFREIGHT'                  => 'FEDEX_2_DAY_FREIGHT',
+        'FEDEX2DAY'                         => 'FEDEX_2_DAY',
+        'FEDEX3DAYFREIGHT'                  => 'FEDEX_3_DAY_FREIGHT',
+        'FEDEXEXPRESSSAVER'                 => 'FEDEX_EXPRESS_SAVER',
+        'FEDEXGROUND'                       => 'FEDEX_GROUND',
+        'FIRSTOVERNIGHT'                    => 'FIRST_OVERNIGHT',
+        'GROUNDHOMEDELIVERY'                => 'GROUND_HOME_DELIVERY',
+        'INTERNATIONALECONOMY'              => 'INTERNATIONAL_ECONOMY',
+        'INTERNATIONALECONOMY FREIGHT'      => 'INTERNATIONAL_ECONOMY_FREIGHT',
+        'INTERNATIONALFIRST'                => 'INTERNATIONAL_FIRST',
+        'INTERNATIONALGROUND'               => 'INTERNATIONAL_GROUND',
+        'INTERNATIONALPRIORITY'             => 'INTERNATIONAL_PRIORITY',
+        'INTERNATIONALPRIORITY FREIGHT'     => 'INTERNATIONAL_PRIORITY_FREIGHT',
+        'PRIORITYOVERNIGHT'                 => 'PRIORITY_OVERNIGHT',
+        'SMARTPOST'                         => 'SMART_POST',
+        'STANDARDOVERNIGHT'                 => 'STANDARD_OVERNIGHT',
+        'FEDEXFREIGHT'                      => 'FEDEX_FREIGHT',
+        'FEDEXNATIONALFREIGHT'              => 'FEDEX_NATIONAL_FREIGHT',
+    ],
+    'dropoff' => [
+        'REGULARPICKUP'         => 'REGULAR_PICKUP',
+        'REQUESTCOURIER'        => 'REQUEST_COURIER',
+        'DROPBOX'               => 'DROP_BOX',
+        'BUSINESSSERVICECENTER' => 'BUSINESS_SERVICE_CENTER',
+        'STATION'               => 'STATION',
+    ],
+    'packaging' => [
+        'FEDEXENVELOPE'     => 'FEDEX_ENVELOPE',
+        'FEDEXPAK'          => 'FEDEX_PAK',
+        'FEDEXBOX'          => 'FEDEX_BOX',
+        'FEDEXTUBE'         => 'FEDEX_TUBE',
+        'FEDEX10KGBOX'      => 'FEDEX_10KG_BOX',
+        'FEDEX25KGBOX'      => 'FEDEX_25KG_BOX',
+        'YOURPACKAGING'     => 'YOUR_PACKAGING',
+    ],
+];
+
+/** @var Mage_Core_Model_Resource_Setup $this */
+$installer = $this;
+$configDataTable = $installer->getTable('core/config_data');
+$conn = $installer->getConnection();
+
+$select = $conn->select()
+    ->from($configDataTable)
+    ->where(
+        'path IN (?)',
+        [
+            'carriers/fedex/packaging',
+            'carriers/fedex/dropoff',
+            'carriers/fedex/free_method',
+            'carriers/fedex/allowed_methods',
+        ],
+    );
+
+$mapNew = '';
+$mapsOld = $conn->fetchAll($select);
+foreach ($mapsOld as $mapOld) {
+    if (stripos($mapOld['path'], 'packaging') && isset($codes['packaging'][$mapOld['value']])) {
+        $mapNew = $codes['packaging'][$mapOld['value']];
+    } elseif (stripos($mapOld['path'], 'dropoff') && isset($codes['dropoff'][$mapOld['value']])) {
+        $mapNew = $codes['dropoff'][$mapOld['value']];
+    } elseif (stripos($mapOld['path'], 'free_method') && isset($codes['method'][$mapOld['value']])) {
+        $mapNew = $codes['method'][$mapOld['value']];
+    } elseif (stripos($mapOld['path'], 'allowed_methods')) {
+        $mapNew = [];
+        foreach (explode(',', $mapOld['value']) as $shippingMethod) {
+            $mapNew[] = $codes['method'][$shippingMethod] ?? $shippingMethod;
+        }
+
+        $mapNew = implode(',', $mapNew);
+    } else {
+        continue;
+    }
+
+    if ($mapNew != $mapOld['value']) {
+        $whereConfigId = $conn->quoteInto('config_id = ?', $mapOld['config_id']);
+        $conn->update(
+            $configDataTable,
+            ['value' => $mapNew],
+            $whereConfigId,
+        );
+    }
+}

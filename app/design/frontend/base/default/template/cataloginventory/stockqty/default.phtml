@@ -1,0 +1,18 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/**
+ * @see Mage_CatalogInventory_Block_Stockqty_Default
+ * @var Mage_CatalogInventory_Block_Stockqty_Default $this 
+ */
+?>
+<?php if($this->isMsgVisible()): ?>
+    <p class="availability-only">
+        <span title="<?php echo $this->__('Only %s left', ($this->getStockQty())) ?>"><?php echo $this->__('Only %s left', "<strong>{$this->getStockQty()}</strong>") ?></span>
+    </p>
+<?php endif ?>

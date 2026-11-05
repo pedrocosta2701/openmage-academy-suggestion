@@ -1,0 +1,22 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Tag_Block_All $this */
+?>
+<div class="page-title">
+    <h1><?php echo $this->__('All Tags') ?></h1>
+</div>
+<?php if(count($this->getTags()) > 0): ?>
+    <ul class="tags-list">
+        <?php foreach ($this->getTags() as $_tag): ?>
+            <li><a href="<?php echo $_tag->getTaggedProductsUrl() ?>" style="font-size:<?php echo $_tag->getRatio()*70+75 ?>%;"><?php echo $this->escapeHtml($_tag->getName()) ?></a></li>
+        <?php endforeach ?>
+    </ul>
+<?php else: ?>
+    <p class="note-msg"><?php echo $this->__('There are no tags available.') ?></p>
+<?php endif ?>

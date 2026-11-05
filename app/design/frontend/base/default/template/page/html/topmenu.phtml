@@ -1,0 +1,23 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+?>
+<?php
+/**
+ * Top menu for store
+ *
+ * @var Mage_Page_Block_Html_Topmenu $this
+ */
+?>
+<?php $_menu = $this->getHtml('level-top') ?>
+<?php if($_menu): ?>
+<div class="nav-container">
+    <ul id="nav">
+        <?php echo $_menu ?>
+    </ul>
+</div>
+<?php endif ?>

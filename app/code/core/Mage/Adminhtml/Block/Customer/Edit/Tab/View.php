@@ -1,0 +1,249 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+use Carbon\Carbon;
+
+/**
+ * Customer account form block
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Block_Customer_Edit_Tab_View extends Mage_Adminhtml_Block_Template implements Mage_Adminhtml_Block_Widget_Tab_Interface
+{
+    /**
+     * @var Mage_Customer_Model_Customer
+     */
+    protected $_customer;
+
+    protected $_customerLog;
+
+    /**
+     * @return Mage_Customer_Model_Customer
+     */
+    public function getCustomer()
+    {
+        if (!$this->_customer) {
+            $this->_customer = Mage::registry('current_customer');
+        }
+
+        return $this->_customer;
+    }
+
+    /**
+     * @return string|void
+     */
+    public function getGroupName()
+    {
+        if ($groupId = $this->getCustomer()->getGroupId()) {
+            return Mage::getModel('customer/group')
+                ->load($groupId)
+                ->getCustomerGroupCode();
+        }
+    }
+
+    /**
+     * Load Customer Log model
+     *
+     * @return Mage_Log_Model_Customer
+     */
+    public function getCustomerLog()
+    {
+        if (!$this->_customerLog) {
+            $this->_customerLog = Mage::getModel('log/customer')
+                ->loadByCustomer($this->getCustomer()->getId());
+        }
+
+        return $this->_customerLog;
+    }
+
+    /**
+     * Get customer creation date
+     *
+     * @return string
+     */
+    public function getCreateDate()
+    {
+        return ($date = $this->getCustomer()->getCreatedAt())
+            ? $this->formatTimezoneDate($date, Mage_Core_Model_Locale::FORMAT_TYPE_MEDIUM, true, false)
+            : null;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getStoreCreateDate()
+    {
+        $date = $this->getCustomer()->getCreatedAtTimestamp();
+        if (!$date) {
+            return null;
+        }
+
+        return $this->formatTimezoneDate(
+            $date,
+            Mage_Core_Model_Locale::FORMAT_TYPE_MEDIUM,
+            true,
+            false,
+        );
+    }
+
+    public function getStoreCreateDateTimezone()
+    {
+        return Mage::app()->getStore($this->getCustomer()->getStoreId())
+            ->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
+    }
+
+    /**
+     * Get customer last login date
+     *
+     * @return string
+     */
+    public function getLastLoginDate()
+    {
+        return ($date = $this->getCustomerLog()->getLoginAtTimestamp())
+            ? $this->formatTimezoneDate($date, Mage_Core_Model_Locale::FORMAT_TYPE_MEDIUM, true, false)
+            : Mage::helper('customer')->__('Never');
+    }
+
+    /**
+     * @return string
+     */
+    public function getStoreLastLoginDate()
+    {
+        if ($date = $this->getCustomerLog()->getLoginAtTimestamp()) {
+            $date = Mage::app()->getLocale()->storeDate(
+                $this->getCustomer()->getStoreId(),
+                $date,
+                true,
+            );
+            return $this->formatDate($date, Mage_Core_Model_Locale::FORMAT_TYPE_MEDIUM, true);
+        }
+
+        return Mage::helper('customer')->__('Never');
+    }
+
+    public function getStoreLastLoginDateTimezone()
+    {
+        return Mage::app()->getStore($this->getCustomer()->getStoreId())
+            ->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentStatus()
+    {
+        $log = $this->getCustomerLog();
+        if ($log->getLogoutAt()
+            || !$log->getLastVisitAt()
+            || Carbon::parse(Varien_Date::now())->getTimestamp() - Carbon::parse($log->getLastVisitAt())->getTimestamp() > Mage_Log_Model_Visitor::getOnlineMinutesInterval() * 60
+        ) {
+            return Mage::helper('customer')->__('Offline');
+        }
+
+        return Mage::helper('customer')->__('Online');
+    }
+
+    /**
+     * @return string
+     */
+    public function getIsConfirmedStatus()
+    {
+        $this->getCustomer();
+        if (!$this->_customer->getConfirmation()) {
+            return Mage::helper('customer')->__('Confirmed');
+        }
+
+        if ($this->_customer->isConfirmationRequired()) {
+            return Mage::helper('customer')->__('Not confirmed, cannot login');
+        }
+
+        return Mage::helper('customer')->__('Not confirmed, can login');
+    }
+
+    public function getCreatedInStore()
+    {
+        return Mage::app()->getStore($this->getCustomer()->getStoreId())->getName();
+    }
+
+    public function getStoreId()
+    {
+        return $this->getCustomer()->getStoreId();
+    }
+
+    /**
+     * @return string
+     */
+    public function getBillingAddressHtml()
+    {
+        if ($address = $this->getCustomer()->getPrimaryBillingAddress()) {
+            return $address->format('html');
+        }
+
+        return Mage::helper('customer')->__('The customer does not have default billing address.');
+    }
+
+    /**
+     * @return string
+     */
+    public function getAccordionHtml()
+    {
+        return $this->getChildHtml('accordion');
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesHtml()
+    {
+        return $this->getChildHtml('sales');
+    }
+
+    /**
+     * @return string
+     */
+    public function getTabLabel()
+    {
+        return Mage::helper('customer')->__('Customer View');
+    }
+
+    /**
+     * @return string
+     */
+    public function getTabTitle()
+    {
+        return Mage::helper('customer')->__('Customer View');
+    }
+
+    /**
+     * @return bool
+     */
+    public function canShowTab()
+    {
+        return (bool) Mage::registry('current_customer')->getId();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHidden()
+    {
+        return !Mage::registry('current_customer')->getId();
+    }
+
+    /**
+     * Return instance of core helper
+     *
+     * @return Mage_Core_Helper_Data
+     * @deprecated
+     */
+    protected function _getCoreHelper()
+    {
+        return Mage::helper('core');
+    }
+}

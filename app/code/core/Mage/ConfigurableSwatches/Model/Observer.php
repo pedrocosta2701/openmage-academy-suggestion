@@ -1,0 +1,161 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_ConfigurableSwatches
+ */
+
+/**
+ * @package    Mage_ConfigurableSwatches
+ */
+class Mage_ConfigurableSwatches_Model_Observer extends Mage_Core_Model_Abstract
+{
+    /**
+     * Attach children products after product list load
+     * Observes: catalog_block_product_list_collection
+     *
+     * @return void
+     * @throws Mage_Core_Exception
+     * @throws Mage_Core_Model_Store_Exception
+     * @throws Zend_Cache_Exception
+     */
+    public function productListCollectionLoadAfter(Varien_Event_Observer $observer)
+    {
+        if (!Mage::helper('configurableswatches')->isEnabled()) {
+            return;
+        }
+
+        /** @var Mage_ConfigurableSwatches_Helper_Mediafallback $mediaHelper */
+        $mediaHelper = Mage::helper('configurableswatches/mediafallback');
+
+        /** @var Mage_ConfigurableSwatches_Helper_List_Price $priceHelper */
+        $priceHelper = Mage::helper('configurableswatches/list_price');
+
+        /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
+        $collection = $observer->getCollection();
+
+        if ($collection
+            instanceof Mage_ConfigurableSwatches_Model_Resource_Catalog_Product_Type_Configurable_Product_Collection
+        ) {
+            // avoid recursion
+            return;
+        }
+
+        $products = $collection->getItems();
+
+        $mediaHelper->attachChildrenProducts($products, $collection->getStoreId());
+
+        $mediaHelper->attachProductChildrenAttributeMapping($products, $collection->getStoreId());
+
+        if ($priceHelper->isEnabled()) {
+            $priceHelper->attachConfigurableProductChildrenPricesMapping($products, $collection->getStoreId());
+        }
+
+        $mediaHelper->attachGallerySetToCollection($products, $collection->getStoreId());
+
+        foreach ($products as $product) {
+            $mediaHelper->groupMediaGalleryImages($product);
+            Mage::helper('configurableswatches/productimg')
+                ->indexProductImages($product, $product->getListSwatchAttrValues());
+        }
+    }
+
+    /**
+     * Attach children products after product load
+     * Observes: catalog_product_load_after
+     *
+     * @return void
+     * @throws Mage_Core_Exception
+     */
+    public function productLoadAfter(Varien_Event_Observer $observer)
+    {
+        if (!Mage::helper('configurableswatches')->isEnabled()) { // functionality disabled
+            return; // exit without loading swatch functionality
+        }
+
+        /** @var Mage_ConfigurableSwatches_Helper_Mediafallback $helper */
+        $helper = Mage::helper('configurableswatches/mediafallback');
+
+        /** @var Mage_Catalog_Model_Product $product */
+        $product = $observer->getDataObject();
+
+        if ($product->getTypeId() != Mage_Catalog_Model_Product_Type_Configurable::TYPE_CODE) {
+            return;
+        }
+
+        $helper->groupMediaGalleryImages($product);
+
+        $helper->attachProductChildrenAttributeMapping([$product], $product->getStoreId(), false);
+    }
+
+    /**
+     * Instruct media attribute to load images for product's children
+     * if config swatches enabled.
+     * Observes: catalog_product_attribute_backend_media_load_gallery_before
+     *
+     * @return void
+     * @throws Mage_Core_Exception
+     */
+    public function loadChildProductImagesOnMediaLoad(Varien_Event_Observer $observer)
+    {
+        if (!Mage::helper('configurableswatches')->isEnabled()) { // functionality disabled
+            return; // exit without loading swatch functionality
+        }
+
+        /** @var Varien_Object $eventWrapper */
+        $eventWrapper = $observer->getEventObjectWrapper();
+        /** @var Mage_Catalog_Model_Product $product */
+        $product = $eventWrapper->getProduct();
+
+        if ($product->getTypeId() != Mage_Catalog_Model_Product_Type_Configurable::TYPE_CODE) {
+            return;
+        }
+
+        /** @var Mage_Catalog_Model_Product_Type_Configurable $productType */
+        $productType = Mage::getModel('catalog/product_type_configurable');
+
+        $childrenProducts = $productType->getUsedProducts(null, $product);
+        $product->setChildrenProducts($childrenProducts);
+
+        $mediaProductIds = [];
+        foreach ($childrenProducts as $childProduct) {
+            $mediaProductIds[] = $childProduct->getId();
+        }
+
+        if ($mediaProductIds === []) { // no children product IDs found
+            return; // stop execution of method
+        }
+
+        $mediaProductIds[] = $product->getId(); // ensure original product's media images are still loaded
+
+        $eventWrapper->setProductIdsOverride($mediaProductIds);
+    }
+
+    /**
+     * Convert a catalog layer block with the right templates
+     * Observes: controller_action_layout_generate_blocks_after
+     *
+     * @return void
+     * @throws Mage_Core_Exception
+     */
+    public function convertLayerBlock(Varien_Event_Observer $observer)
+    {
+        $front = Mage::app()->getRequest()->getRouteName();
+        $controller = Mage::app()->getRequest()->getControllerName();
+        $action = Mage::app()->getRequest()->getActionName();
+
+        // Perform this operation if we're on a category view page or search results page
+        if (($front == 'catalog' && $controller == 'category' && $action == 'view')
+            || ($front == 'catalogsearch' && $controller == 'result' && $action == 'index')
+        ) {
+            $blockName = 'catalog.leftnav';
+            if ($front === 'catalogsearch') {
+                $blockName = 'catalogsearch.leftnav';
+            }
+
+            Mage::helper('configurableswatches/productlist')->convertLayerBlock($blockName);
+        }
+    }
+}

@@ -1,0 +1,244 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Store switcher block
+ *
+ * @package    Mage_Adminhtml
+ *
+ * @method string getDefaultStoreName()
+ * @method bool   getUseAjax()
+ * @method bool   getUseConfirm()
+ * @method $this  setDefaultStoreName(string $value)
+ * @method $this  setSwitchUrl(string $value)
+ * @method $this  setUseAjax(bool $value)
+ * @method $this  setUseConfirm(bool $value)
+ */
+class Mage_Adminhtml_Block_Store_Switcher extends Mage_Adminhtml_Block_Template
+{
+    /**
+     * @var array
+     */
+    protected $_storeIds;
+
+    /**
+     * Name of store variable
+     *
+     * @var string
+     */
+    protected $_storeVarName = 'store';
+
+    /**
+     * @var bool
+     */
+    protected $_hasDefaultOption = true;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setTemplate('store/switcher.phtml');
+        $this->setUseConfirm(true);
+        $this->setUseAjax(true);
+        $this->setDefaultStoreName($this->__('All Store Views'));
+    }
+
+    /**
+     * @return Mage_Core_Model_Resource_Website_Collection
+     * @throws Mage_Core_Exception
+     * @deprecated
+     */
+    public function getWebsiteCollection()
+    {
+        $collection = Mage::getModel('core/website')->getResourceCollection();
+
+        $websiteIds = $this->getWebsiteIds();
+        if (!is_null($websiteIds)) {
+            $collection->addIdFilter($this->getWebsiteIds());
+        }
+
+        return $collection->load();
+    }
+
+    /**
+     * Get websites
+     *
+     * @return array
+     */
+    public function getWebsites()
+    {
+        $websites = Mage::app()->getWebsites();
+        if ($websiteIds = $this->getWebsiteIds()) {
+            foreach (array_keys($websites) as $websiteId) {
+                if (!in_array($websiteId, $websiteIds)) {
+                    unset($websites[$websiteId]);
+                }
+            }
+        }
+
+        return $websites;
+    }
+
+    /**
+     * @param  int|Mage_Core_Model_Website|string              $website
+     * @return Mage_Core_Model_Resource_Store_Group_Collection
+     * @deprecated
+     */
+    public function getGroupCollection($website)
+    {
+        if (!$website instanceof Mage_Core_Model_Website) {
+            $website = Mage::getModel('core/website')->load($website);
+        }
+
+        return $website->getGroupCollection();
+    }
+
+    /**
+     * Get store groups for specified website
+     *
+     * @param  null|int|Mage_Core_Model_Website|string $website
+     * @return array
+     */
+    public function getStoreGroups($website)
+    {
+        if (!$website instanceof Mage_Core_Model_Website) {
+            $website = Mage::app()->getWebsite($website);
+        }
+
+        return $website->getGroups();
+    }
+
+    /**
+     * @param  int|Mage_Core_Model_Store_Group|string    $group
+     * @return Mage_Core_Model_Resource_Store_Collection
+     * @deprecated
+     */
+    public function getStoreCollection($group)
+    {
+        if (!$group instanceof Mage_Core_Model_Store_Group) {
+            $group = Mage::getModel('core/store_group')->load($group);
+        }
+
+        $stores = $group->getStoreCollection();
+        $storeIds = $this->getStoreIds();
+        if (!empty($storeIds)) {
+            $stores->addIdFilter($storeIds);
+        }
+
+        return $stores;
+    }
+
+    /**
+     * Get store views for specified store group
+     *
+     * @param  null|int|Mage_Core_Model_Store_Group|string $group
+     * @return array
+     */
+    public function getStores($group)
+    {
+        if (!$group instanceof Mage_Core_Model_Store_Group) {
+            $group = Mage::app()->getGroup($group);
+        }
+
+        $stores = $group->getStores();
+        if ($storeIds = $this->getStoreIds()) {
+            foreach (array_keys($stores) as $storeId) {
+                if (!in_array($storeId, $storeIds)) {
+                    unset($stores[$storeId]);
+                }
+            }
+        }
+
+        return $stores;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSwitchUrl()
+    {
+        if ($url = $this->getDataByKey('switch_url')) {
+            return $url;
+        }
+
+        return $this->getUrl('*/*/*', ['_current' => true, $this->_storeVarName => null]);
+    }
+
+    /**
+     * @param  string $varName
+     * @return $this
+     */
+    public function setStoreVarName($varName)
+    {
+        $this->_storeVarName = $varName;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    public function getStoreId()
+    {
+        return $this->getRequest()->getParam($this->_storeVarName);
+    }
+
+    /**
+     * @param  array $storeIds
+     * @return $this
+     */
+    public function setStoreIds($storeIds)
+    {
+        $this->_storeIds = $storeIds;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStoreIds()
+    {
+        return $this->_storeIds;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShow()
+    {
+        return !Mage::app()->isSingleStoreMode();
+    }
+
+    /**
+     * @return string
+     */
+    #[Override]
+    protected function _toHtml()
+    {
+        if (!Mage::app()->isSingleStoreMode()) {
+            return parent::_toHtml();
+        }
+
+        return '';
+    }
+
+    /**
+     * Set/Get whether the switcher should show default option
+     *
+     * @param  bool $hasDefaultOption
+     * @return bool
+     */
+    public function hasDefaultOption($hasDefaultOption = null)
+    {
+        if ($hasDefaultOption !== null) {
+            $this->_hasDefaultOption = $hasDefaultOption;
+        }
+
+        return $this->_hasDefaultOption;
+    }
+}

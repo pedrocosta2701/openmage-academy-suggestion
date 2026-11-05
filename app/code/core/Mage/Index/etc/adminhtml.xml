@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package    Mage_Index
+ */
+-->
+<config>
+    <menu>
+        <system>
+            <children>
+                <index translate="title" module="index">
+                    <title>Index Management</title>
+                    <action>adminhtml/process/list</action>
+                    <sort_order>92</sort_order>
+                </index>
+            </children>
+        </system>
+    </menu>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <index translate="title">
+                                <title>Index Management</title>
+                            </index>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+</config>

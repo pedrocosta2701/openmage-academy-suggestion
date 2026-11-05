@@ -1,0 +1,33 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     rwd_default
+ */
+
+/**
+ * Shoping cart sidebar
+ *
+ * @see Mage_Checkout_Block_Cart_Sidebar
+ * @var Mage_Checkout_Block_Cart_Sidebar $this 
+ */
+
+?>
+
+<?php
+    $_cartQty = $this->getSummaryCount();
+    if(empty($_cartQty)) {
+        $_cartQty = 0;
+    }
+?>
+
+<a href="<?php echo $this->helper('checkout/cart')->getCartUrl(); ?>" data-target-element="#header-cart" class="skip-link skip-cart <?php if($_cartQty <= 0): ?> no-count<?php endif ?>" title="<?php echo $this->__('Cart'); ?>">
+    <span class="icon"></span>
+    <span class="label"><?php echo $this->__('Cart'); ?></span>
+    <span class="count"><?php echo $_cartQty; ?></span>
+</a>
+
+<div id="header-cart" class="block block-cart skip-content">
+    <?php echo $this->getChildHtml('minicart_content');?>
+</div>

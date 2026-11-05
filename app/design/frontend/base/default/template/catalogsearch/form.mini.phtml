@@ -1,0 +1,27 @@
+<?php
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Academic Free License (AFL 3.0)
+ * @package     base_default
+ */
+
+/** @var Mage_Core_Block_Template $this */
+
+/** @var Mage_CatalogSearch_Helper_Data $catalogSearchHelper */
+$catalogSearchHelper =  $this->helper('catalogsearch');
+?>
+<form id="search_mini_form" action="<?php echo $catalogSearchHelper->getResultUrl() ?>" method="get">
+    <div class="form-search">
+        <label for="search"><?php echo $this->__('Search:') ?></label>
+        <input id="search" type="text" name="<?php echo $catalogSearchHelper->getQueryParamName() ?>" value="<?php echo $catalogSearchHelper->getEscapedQueryText() ?>" class="input-text" maxlength="<?php echo $catalogSearchHelper->getMaxQueryLength();?>" />
+        <button type="submit" title="<?php echo Mage::helper('core')->quoteEscape($this->__('Search')) ?>" class="button"><span><span><?php echo $this->__('Search') ?></span></span></button>
+        <div id="search_autocomplete" class="search-autocomplete"></div>
+        <script type="text/javascript">
+        //<![CDATA[
+            var searchForm = new Varien.searchForm('search_mini_form', 'search', '<?php echo Mage::helper('core')->jsQuoteEscape($this->__('Search entire store here...')) ?>');
+            searchForm.initAutocomplete('<?php echo $catalogSearchHelper->getSuggestUrl() ?>', 'search_autocomplete');
+        //]]>
+        </script>
+    </div>
+</form>

@@ -1,0 +1,163 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Adminhtml
+ */
+
+/**
+ * Tax rule controller
+ *
+ * @package    Mage_Adminhtml
+ */
+class Mage_Adminhtml_Checkout_AgreementController extends Mage_Adminhtml_Controller_Action
+{
+    /**
+     * ACL resource
+     * @see Mage_Adminhtml_Controller_Action::_isAllowed()
+     */
+    public const ADMIN_RESOURCE = 'sales/checkoutagreement';
+
+    /**
+     * Controller pre-dispatch method
+     *
+     * @return Mage_Adminhtml_Controller_Action
+     */
+    #[Override]
+    public function preDispatch()
+    {
+        $this->_setForcedFormKeyActions('delete');
+        return parent::preDispatch();
+    }
+
+    /**
+     * @return $this|void
+     */
+    public function indexAction()
+    {
+        $this->_title($this->__('Sales'))->_title($this->__('Terms and Conditions'));
+
+        $this->_initAction()
+            ->_addContent($this->getLayout()->createBlock('adminhtml/checkout_agreement'))
+            ->renderLayout();
+        return $this;
+    }
+
+    /**
+     * @return void
+     */
+    public function newAction()
+    {
+        $this->_forward('edit');
+    }
+
+    /**
+     * @return void
+     */
+    public function editAction()
+    {
+        $this->_title($this->__('Sales'))->_title($this->__('Terms and Conditions'));
+
+        $id  = $this->getRequest()->getParam('id');
+        $agreementModel  = Mage::getModel('checkout/agreement');
+
+        if ($id) {
+            $agreementModel->load($id);
+            if (!$agreementModel->getId()) {
+                Mage::getSingleton('adminhtml/session')->addError(
+                    Mage::helper('checkout')->__('This condition no longer exists.'),
+                );
+                $this->_redirect('*/*/');
+                return;
+            }
+        }
+
+        $this->_title($agreementModel->getId() ? $agreementModel->getName() : $this->__('New Condition'));
+
+        $data = Mage::getSingleton('adminhtml/session')->getAgreementData(true);
+        if (!empty($data)) {
+            $agreementModel->setData($data);
+        }
+
+        Mage::register('checkout_agreement', $agreementModel);
+
+        $this->_initAction()
+            ->_addBreadcrumb($id ? Mage::helper('checkout')->__('Edit Condition') : Mage::helper('checkout')->__('New Condition'), $id ? Mage::helper('checkout')->__('Edit Condition') : Mage::helper('checkout')->__('New Condition'))
+            ->_addContent($this->getLayout()->createBlock('adminhtml/checkout_agreement_edit')->setData('action', $this->getUrl('*/*/save')))
+            ->renderLayout();
+    }
+
+    /**
+     * @return void
+     */
+    public function saveAction()
+    {
+        if ($postData = $this->getRequest()->getPost()) {
+            $model = Mage::getSingleton('checkout/agreement');
+            $model->setData($postData);
+
+            try {
+                $model->save();
+
+                Mage::getSingleton('adminhtml/session')->addSuccess(Mage::helper('checkout')->__('The condition has been saved.'));
+                $this->_redirect('*/*/');
+
+                return;
+            } catch (Mage_Core_Exception $mageCoreException) {
+                Mage::getSingleton('adminhtml/session')->addError($mageCoreException->getMessage());
+            } catch (Exception) {
+                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('checkout')->__('An error occurred while saving this condition.'));
+            }
+
+            Mage::getSingleton('adminhtml/session')->setAgreementData($postData);
+            $this->_redirectReferer();
+        }
+    }
+
+    /**
+     * @return void
+     */
+    public function deleteAction()
+    {
+        $id = (int) $this->getRequest()->getParam('id');
+        $model = Mage::getSingleton('checkout/agreement')
+            ->load($id);
+        if (!$model->getId()) {
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('checkout')->__('This condition no longer exists.'));
+            $this->_redirect('*/*/');
+            return;
+        }
+
+        try {
+            $model->delete();
+
+            Mage::getSingleton('adminhtml/session')->addSuccess(Mage::helper('checkout')->__('The condition has been deleted'));
+            $this->_redirect('*/*/');
+
+            return;
+        } catch (Mage_Core_Exception $mageCoreException) {
+            Mage::getSingleton('adminhtml/session')->addError($mageCoreException->getMessage());
+        } catch (Exception) {
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('checkout')->__('An error occurred while deleting this condition.'));
+        }
+
+        $this->_redirectReferer();
+    }
+
+    /**
+     * Initialize action
+     *
+     * @return $this
+     */
+    protected function _initAction()
+    {
+        $this->loadLayout()
+            ->_setActiveMenu('sales/checkoutagreement')
+            ->_addBreadcrumb(Mage::helper('checkout')->__('Sales'), Mage::helper('checkout')->__('Sales'))
+            ->_addBreadcrumb(Mage::helper('checkout')->__('Checkout Conditions'), Mage::helper('checkout')->__('Checkout Terms and Conditions'))
+        ;
+        return $this;
+    }
+}

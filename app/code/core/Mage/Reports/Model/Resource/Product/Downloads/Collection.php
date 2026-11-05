@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @copyright  For copyright and license information, read the COPYING.txt file.
+ * @link       /COPYING.txt
+ * @license    Open Software License (OSL 3.0)
+ * @package    Mage_Reports
+ */
+
+/**
+ * Product Downloads Report collection
+ *
+ * @package    Mage_Reports
+ */
+class Mage_Reports_Model_Resource_Product_Downloads_Collection extends Mage_Catalog_Model_Resource_Product_Collection
+{
+    /**
+     * Identifier field name
+     *
+     * @var string
+     */
+    protected $_idFieldName    = 'link_id';
+
+    /**
+     * Add downloads summary grouping by product
+     *
+     * @return $this
+     */
+    public function addSummary()
+    {
+        $adapter  = $this->getConnection();
+        $linkExpr = $adapter->getIfNullSql('l_store.title', 'l.title');
+
+        $this->getSelect()
+            ->joinInner(
+                ['d' =>  $this->getTable('downloadable/link_purchased_item')],
+                'e.entity_id = d.product_id',
+                [
+                    'purchases' => new Zend_Db_Expr('SUM(d.number_of_downloads_bought)'),
+                    'downloads' => new Zend_Db_Expr('SUM(d.number_of_downloads_used)'),
+                ],
+            )
+            ->joinInner(
+                ['l' => $this->getTable('downloadable/link_title')],
+                'd.link_id = l.link_id',
+                ['l.link_id'],
+            )
+            ->joinLeft(
+                ['l_store' => $this->getTable('downloadable/link_title')],
+                $adapter->quoteInto('l.link_id = l_store.link_id AND l_store.store_id = ?', (int) $this->getStoreId()),
+                ['link_title' => $linkExpr],
+            )
+            ->where(implode(' OR ', [
+                $adapter->quoteInto('d.number_of_downloads_bought > ?', 0),
+                $adapter->quoteInto('d.number_of_downloads_used > ?', 0),
+            ]))
+            ->group('d.link_id');
+        /**
+         * Allow to use analytic function
+         */
+        $this->_useAnalyticFunction = true;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    public function setOrder($attribute, $dir = self::SORT_ORDER_DESC)
+    {
+        if (in_array($attribute, ['purchases', 'downloads', 'link_title'])) {
+            $this->getSelect()->order($attribute . ' ' . $dir);
+        } else {
+            parent::setOrder($attribute, $dir);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add filtering
+     *
+     * @param  string $field
+     * @param  string $condition
+     * @return $this
+     */
+    #[Override]
+    public function addFieldToFilter($field, $condition = null)
+    {
+        if ($field == 'link_title') {
+            $conditionSql = $this->_getConditionSql('l.title', $condition);
+            $this->getSelect()->where($conditionSql);
+        } else {
+            parent::addFieldToFilter($field, $condition);
+        }
+
+        return $this;
+    }
+}
