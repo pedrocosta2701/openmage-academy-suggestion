@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Academy_Suggestion>
+            <version>1.0.0</version>
+        </Academy_Suggestion>
+    </modules>
+    <global>
+        <models>
+            <academy_suggestion>
+                <class>Academy_Suggestion_Model</class>
+                <resourceModel>academy_suggestion_resource</resourceModel>
+            </academy_suggestion>
+            <academy_suggestion_resource>
+                <class>Academy_Suggestion_Model_Resource</class>
+            </academy_suggestion_resource>
+        </models>
+        <blocks>
+            <academy_suggestion>
+                <class>Academy_Suggestion_Block</class>
+            </academy_suggestion>
+        </blocks>
+        <helpers>
+            <academy_suggestion>
+                <class>Academy_Suggestion_Helper</class>
+            </academy_suggestion>
+        </helpers>
+    </global>
+</config>

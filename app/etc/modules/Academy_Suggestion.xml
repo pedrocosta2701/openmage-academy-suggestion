@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Academy_Suggestion>
+            <active>true</active>
+            <codePool>local</codePool>
+            <depends>
+                <Mage_Core/>
+            </depends>
+        </Academy_Suggestion>
+    </modules>
+</config>
