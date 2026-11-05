@@ -13,6 +13,14 @@
             </academy_suggestion>
             <academy_suggestion_resource>
                 <class>Academy_Suggestion_Model_Resource</class>
+                <entities>
+                    <category>
+                        <table>academy_suggestion_category</table>
+                    </category>
+                    <suggestion>
+                        <table>academy_suggestion</table>
+                    </suggestion>
+                </entities>
             </academy_suggestion_resource>
         </models>
         <blocks>
@@ -25,5 +33,13 @@
                 <class>Academy_Suggestion_Helper</class>
             </academy_suggestion>
         </helpers>
+        <resources>
+            <academy_suggestion_setup>
+                <setup>
+                    <module>Academy_Suggestion</module>
+                    <class>Mage_Core_Model_Resource_Setup</class>
+                </setup>
+            </academy_suggestion_setup>
+        </resources>
     </global>
 </config>
